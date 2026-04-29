@@ -145,6 +145,7 @@ enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
 
 enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
     case percentOnly
+    case batteryOnly
     case batteryAndPercent
     case toolAndPercent
 
@@ -154,6 +155,8 @@ enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
         switch self {
         case .percentOnly:
             "Percent only"
+        case .batteryOnly:
+            "Battery only"
         case .batteryAndPercent:
             "Battery + percent"
         case .toolAndPercent:

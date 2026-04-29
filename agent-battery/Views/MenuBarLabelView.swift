@@ -12,16 +12,15 @@ struct MenuBarLabelView: View {
         case .percentOnly:
             Text(percent)
                 .foregroundStyle(labelColor(for: snapshot))
+        case .batteryOnly:
+            BatteryIcon(percent: snapshot.fiveHourRemainingPercent, height: 12)
         case .batteryAndPercent:
-            HStack(spacing: 5) {
-                Image(systemName: batterySymbol(for: snapshot.fiveHourRemainingPercent))
-                    .font(.system(size: 23, weight: .regular))
-                    .symbolRenderingMode(.monochrome)
-                    .frame(width: 34, height: 18, alignment: .center)
+            HStack(spacing: 4) {
+                BatteryIcon(percent: snapshot.fiveHourRemainingPercent, height: 12)
 
                 Text(percent)
+                    .foregroundStyle(labelColor(for: snapshot))
             }
-            .foregroundStyle(labelColor(for: snapshot))
             .fixedSize()
         case .toolAndPercent:
             Text("\(snapshot.tool.shortName) \(percent)")
@@ -50,6 +49,19 @@ struct MenuBarLabelView: View {
         switch store.level(for: snapshot) {
         case .normal:
             return .primary
+        case .warning:
+            return .orange
+        case .critical:
+            return .red
+        case .unavailable:
+            return .secondary
+        }
+    }
+
+    private func batteryColor(for snapshot: UsageSnapshot) -> Color {
+        switch store.level(for: snapshot) {
+        case .normal:
+            return .green
         case .warning:
             return .orange
         case .critical:
