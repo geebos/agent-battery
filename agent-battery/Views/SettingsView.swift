@@ -32,16 +32,27 @@ struct SettingsView: View {
             }
 
             Section("settings.sectionMenuBarDisplay") {
-                Picker("settings.primaryTool", selection: $settings.primaryDisplayTool) {
-                    ForEach(PrimaryDisplayTool.allCases) { option in
-                        Text(option.title).tag(option)
-                    }
-                }
-
                 Picker("settings.displayMode", selection: $settings.menuBarDisplayMode) {
                     ForEach(MenuBarDisplayMode.allCases) { mode in
                         Text(mode.title).tag(mode)
                     }
+                }
+
+                Picker("settings.showSection", selection: $settings.primaryDisplayTool) {
+                    Text("settings.showLowest").tag(PrimaryDisplayTool.automatic)
+                    Text("settings.showClaude").tag(PrimaryDisplayTool.claudeCode)
+                    Text("settings.showCodex").tag(PrimaryDisplayTool.codex)
+                }
+                .pickerStyle(.radioGroup)
+
+                if settings.menuBarDisplayMode.supportsPercentToggle {
+                    Toggle("settings.showPercent", isOn: $settings.showMenuBarPercent)
+                }
+
+                Toggle("settings.colorByUsage", isOn: $settings.colorByUsage)
+
+                if settings.colorByUsage {
+                    UsageColorBar(settings: settings)
                 }
 
                 Toggle("settings.showWeekly", isOn: $settings.showWeeklyUsage)
@@ -54,16 +65,6 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-            }
-
-            Section("settings.sectionAlertThresholds") {
-                Stepper(value: $settings.warningThreshold, in: (settings.criticalThreshold + 1)...95) {
-                    Text(verbatim: String(format: NSLocalizedString("settings.warningBelow", comment: ""), settings.warningThreshold))
-                }
-
-                Stepper(value: $settings.criticalThreshold, in: 1...(settings.warningThreshold - 1)) {
-                    Text(verbatim: String(format: NSLocalizedString("settings.criticalBelow", comment: ""), settings.criticalThreshold))
-                }
             }
 
             Section("settings.sectionLaunch") {
@@ -83,7 +84,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .padding(20)
         .frame(width: 520)
         .background(SettingsWindowIdentifierView())
     }

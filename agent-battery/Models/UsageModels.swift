@@ -153,25 +153,24 @@ enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
 }
 
 enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
-    case percentOnly
-    case batteryOnly
-    case batteryAndPercent
-    case toolAndPercent
+    case percent
+    case battery
+    case tool
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .percentOnly:
-            String(localized: "displayMode.percentOnly")
-        case .batteryOnly:
-            String(localized: "displayMode.batteryOnly")
-        case .batteryAndPercent:
-            String(localized: "displayMode.batteryAndPercent")
-        case .toolAndPercent:
-            String(localized: "displayMode.toolAndPercent")
+        case .percent:
+            String(localized: "displayMode.percent")
+        case .battery:
+            String(localized: "displayMode.battery")
+        case .tool:
+            String(localized: "displayMode.tool")
         }
     }
+
+    var supportsPercentToggle: Bool { self != .percent }
 }
 
 enum RefreshInterval: Int, CaseIterable, Identifiable {

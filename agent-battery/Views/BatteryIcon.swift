@@ -6,6 +6,11 @@ struct BatteryIcon: View {
     var height: CGFloat = 14
     var autoColor: Bool = true
     var fillColor: Color = .primary
+    var lowColor: Color = .red
+    var midColor: Color = .orange
+    var highColor: Color = .white
+    var lowEdge: Double = 16
+    var midEdge: Double = 41
 
     var body: some View {
         if let image = renderedImage() {
@@ -74,14 +79,10 @@ struct BatteryIcon: View {
 
     private var autoColorForPercent: Color {
         guard percent != nil else { return .secondary }
-        switch clampedRatio * 100 {
-        case ..<16:
-            return .red
-        case ..<41:
-            return .orange
-        default:
-            return .green
-        }
+        let p = clampedRatio * 100
+        if p < lowEdge { return lowColor }
+        if p < midEdge { return midColor }
+        return highColor
     }
 }
 

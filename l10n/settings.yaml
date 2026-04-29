@@ -25,6 +25,24 @@ primaryTool:
 displayMode:
   en: "Display mode"
   zh: "显示模式"
+showSection:
+  en: "Show"
+  zh: "显示"
+showLowest:
+  en: "Lowest"
+  zh: "最少"
+showClaude:
+  en: "Claude"
+  zh: "Claude"
+showCodex:
+  en: "Codex"
+  zh: "Codex"
+showPercent:
+  en: "Show percentage"
+  zh: "显示百分比"
+colorByUsage:
+  en: "Color by usage"
+  zh: "按用量着色"
 showWeekly:
   en: "Show weekly usage"
   zh: "显示每周用量"

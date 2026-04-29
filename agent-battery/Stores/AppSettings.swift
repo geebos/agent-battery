@@ -1,6 +1,8 @@
+import AppKit
 import Combine
 import Foundation
 import ServiceManagement
+import SwiftUI
 
 final class AppSettings: ObservableObject {
     private enum Keys {
@@ -8,12 +10,29 @@ final class AppSettings: ObservableObject {
         static let codexEnabled = "codexEnabled"
         static let primaryDisplayTool = "primaryDisplayTool"
         static let menuBarDisplayMode = "menuBarDisplayMode"
+        static let showMenuBarPercent = "showMenuBarPercent"
+        static let colorByUsage = "colorByUsage"
         static let refreshInterval = "refreshInterval"
         static let warningThreshold = "warningThreshold"
         static let criticalThreshold = "criticalThreshold"
         static let launchAtLoginEnabled = "launchAtLoginEnabled"
         static let showWeeklyUsage = "showWeeklyUsage"
         static let codexSessionsPath = "codexSessionsPath"
+        static let usageColorLow = "usageColorLow"
+        static let usageColorMid = "usageColorMid"
+        static let usageColorHigh = "usageColorHigh"
+    }
+
+    enum UsageLevelColor: CaseIterable {
+        case low, mid, high
+
+        var defaultHex: String {
+            switch self {
+            case .low: "FF3B30"
+            case .mid: "FF9500"
+            case .high: "FFFFFF"
+            }
+        }
     }
 
     private let defaults: UserDefaults
@@ -33,6 +52,14 @@ final class AppSettings: ObservableObject {
 
     @Published var menuBarDisplayMode: MenuBarDisplayMode {
         didSet { defaults.set(menuBarDisplayMode.rawValue, forKey: Keys.menuBarDisplayMode) }
+    }
+
+    @Published var showMenuBarPercent: Bool {
+        didSet { defaults.set(showMenuBarPercent, forKey: Keys.showMenuBarPercent) }
+    }
+
+    @Published var colorByUsage: Bool {
+        didSet { defaults.set(colorByUsage, forKey: Keys.colorByUsage) }
     }
 
     @Published var refreshInterval: RefreshInterval {
@@ -61,6 +88,22 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(codexSessionsPath, forKey: Keys.codexSessionsPath) }
     }
 
+    @Published var usageColorLowHex: String {
+        didSet { defaults.set(usageColorLowHex, forKey: Keys.usageColorLow) }
+    }
+
+    @Published var usageColorMidHex: String {
+        didSet { defaults.set(usageColorMidHex, forKey: Keys.usageColorMid) }
+    }
+
+    @Published var usageColorHighHex: String {
+        didSet { defaults.set(usageColorHighHex, forKey: Keys.usageColorHigh) }
+    }
+
+    var usageColorLow: Color { Color(hex: usageColorLowHex) ?? .red }
+    var usageColorMid: Color { Color(hex: usageColorMidHex) ?? .orange }
+    var usageColorHigh: Color { Color(hex: usageColorHighHex) ?? .white }
+
     @Published private(set) var claudeSetupStatus: ClaudeSetupStatus = .unknown
     @Published var claudeSetupMessage: String?
 
@@ -73,7 +116,9 @@ final class AppSettings: ObservableObject {
         ) ?? .automatic
         menuBarDisplayMode = MenuBarDisplayMode(
             rawValue: defaults.string(forKey: Keys.menuBarDisplayMode) ?? ""
-        ) ?? .batteryAndPercent
+        ) ?? .battery
+        showMenuBarPercent = Self.bool(defaults, Keys.showMenuBarPercent, defaultValue: true)
+        colorByUsage = Self.bool(defaults, Keys.colorByUsage, defaultValue: true)
         refreshInterval = RefreshInterval(
             rawValue: defaults.integer(forKey: Keys.refreshInterval)
         ) ?? .oneMinute
@@ -87,6 +132,9 @@ final class AppSettings: ObservableObject {
         launchAtLoginMessage = nil
         showWeeklyUsage = Self.bool(defaults, Keys.showWeeklyUsage, defaultValue: true)
         codexSessionsPath = defaults.string(forKey: Keys.codexSessionsPath) ?? UsageDefaults.codexSessionsPath
+        usageColorLowHex = defaults.string(forKey: Keys.usageColorLow) ?? UsageLevelColor.low.defaultHex
+        usageColorMidHex = defaults.string(forKey: Keys.usageColorMid) ?? UsageLevelColor.mid.defaultHex
+        usageColorHighHex = defaults.string(forKey: Keys.usageColorHigh) ?? UsageLevelColor.high.defaultHex
         refreshClaudeSetupStatus()
     }
 
@@ -164,5 +212,26 @@ final class AppSettings: ObservableObject {
 
     private var claudeSetupConfiguration: ClaudeSetupConfiguration {
         .default()
+    }
+}
+
+extension Color {
+    init?(hex: String) {
+        var trimmed = hex
+        if trimmed.hasPrefix("#") { trimmed.removeFirst() }
+        guard trimmed.count == 6, let value = UInt32(trimmed, radix: 16) else { return nil }
+        self = Color(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
+    }
+
+    var hexString: String {
+        let nsColor = NSColor(self).usingColorSpace(.sRGB) ?? .white
+        let r = Int((nsColor.redComponent * 255).rounded())
+        let g = Int((nsColor.greenComponent * 255).rounded())
+        let b = Int((nsColor.blueComponent * 255).rounded())
+        return String(format: "%02X%02X%02X", r, g, b)
     }
 }

@@ -5,6 +5,8 @@ enum SettingsWindowPresenter {
     static let windowIdentifier = NSUserInterfaceItemIdentifier("agent-battery.settings")
 
     static func show(openSettings: () -> Void) {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+
         if focusExistingWindow() {
             return
         }
@@ -33,12 +35,17 @@ enum SettingsWindowPresenter {
     }
 
     private static func focusWhenWindowIsReady() {
-        DispatchQueue.main.async {
-            _ = focusExistingWindow()
-        }
+        retryFocus(attemptsRemaining: 30)
+    }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            _ = focusExistingWindow()
+    private static func retryFocus(attemptsRemaining: Int) {
+        DispatchQueue.main.async {
+            if focusExistingWindow() || attemptsRemaining <= 0 {
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                retryFocus(attemptsRemaining: attemptsRemaining - 1)
+            }
         }
     }
 }
