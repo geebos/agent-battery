@@ -9,6 +9,7 @@ final class UsageStore: ObservableObject {
     private let claudeProvider = ClaudeCodeUsageProvider()
     private let codexProvider = CodexUsageProvider()
     private let snapshotCache: UsageSnapshotCache
+    private let refreshQueue = DispatchQueue(label: "agent-battery.usage-store.refresh", qos: .userInitiated)
     private var refreshTimer: Timer?
     private var didPerformLaunchRefresh = false
     private var cancellables = Set<AnyCancellable>()
@@ -69,23 +70,23 @@ final class UsageStore: ObservableObject {
     }
 
     func refresh() {
-        var nextSnapshots = snapshots
         let configuration = settings.dataConfiguration
-        let now = Date()
+        let enabledTools = Dictionary(uniqueKeysWithValues: UsageTool.allCases.map { ($0, settings.isEnabled($0)) })
 
-        nextSnapshots[.claudeCode] = refreshedSnapshot(
-            for: .claudeCode,
-            configuration: configuration,
-            now: now
-        )
-        nextSnapshots[.codex] = refreshedSnapshot(
-            for: .codex,
-            configuration: configuration,
-            now: now
-        )
+        refreshQueue.async { [weak self] in
+            guard let self else { return }
+            let now = Date()
+            let claudeRaw = self.rawSnapshot(for: .claudeCode, isEnabled: enabledTools[.claudeCode] ?? false, configuration: configuration)
+            let codexRaw = self.rawSnapshot(for: .codex, isEnabled: enabledTools[.codex] ?? false, configuration: configuration)
 
-        snapshots = nextSnapshots
-        lastRefreshAt = now
+            DispatchQueue.main.async {
+                var nextSnapshots = self.snapshots
+                nextSnapshots[.claudeCode] = self.resolvedSnapshot(claudeRaw, now: now)
+                nextSnapshots[.codex] = self.resolvedSnapshot(codexRaw, now: now)
+                self.snapshots = nextSnapshots
+                self.lastRefreshAt = now
+            }
+        }
     }
 
     func refreshOnLaunch() {
@@ -116,35 +117,38 @@ final class UsageStore: ObservableObject {
     }
 
     private func refreshCodex() {
-        let now = Date()
-        var nextSnapshots = snapshots
-        nextSnapshots[.codex] = refreshedSnapshot(
-            for: .codex,
-            configuration: settings.dataConfiguration,
-            now: now
-        )
-        snapshots = nextSnapshots
-        lastRefreshAt = now
+        let configuration = settings.dataConfiguration
+        let isEnabled = settings.isEnabled(.codex)
+
+        refreshQueue.async { [weak self] in
+            guard let self else { return }
+            let now = Date()
+            let codexRaw = self.rawSnapshot(for: .codex, isEnabled: isEnabled, configuration: configuration)
+
+            DispatchQueue.main.async {
+                var nextSnapshots = self.snapshots
+                nextSnapshots[.codex] = self.resolvedSnapshot(codexRaw, now: now)
+                self.snapshots = nextSnapshots
+                self.lastRefreshAt = now
+            }
+        }
     }
 
-    private func refreshedSnapshot(
+    private func rawSnapshot(
         for tool: UsageTool,
-        configuration: UsageDataConfiguration,
-        now: Date
+        isEnabled: Bool,
+        configuration: UsageDataConfiguration
     ) -> UsageSnapshot {
-        guard settings.isEnabled(tool) else {
+        guard isEnabled else {
             return .disabled(tool: tool)
         }
 
-        let rawSnapshot: UsageSnapshot
         switch tool {
         case .claudeCode:
-            rawSnapshot = claudeProvider.fetch(configuration: configuration)
+            return claudeProvider.fetch(configuration: configuration)
         case .codex:
-            rawSnapshot = codexProvider.fetch(configuration: configuration)
+            return codexProvider.fetch(configuration: configuration)
         }
-
-        return resolvedSnapshot(rawSnapshot, now: now)
     }
 
     private func resolvedSnapshot(_ newSnapshot: UsageSnapshot, now: Date) -> UsageSnapshot {
