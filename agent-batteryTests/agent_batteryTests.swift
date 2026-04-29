@@ -60,13 +60,17 @@ struct AgentBatteryTests {
 
         let beforeReset = try #require(cache.snapshot(for: .claudeCode, now: now.addingTimeInterval(30 * 60)))
         let afterFiveHourReset = try #require(cache.snapshot(for: .claudeCode, now: now.addingTimeInterval(2 * 60 * 60)))
+        let afterWeeklyReset = try #require(cache.snapshot(for: .claudeCode, now: now.addingTimeInterval(9 * 24 * 60 * 60)))
 
         #expect(beforeReset.fiveHourRemainingPercent == 45)
         #expect(beforeReset.weeklyRemainingPercent == 60)
         #expect(afterFiveHourReset.fiveHourRemainingPercent == 100)
-        #expect(afterFiveHourReset.fiveHourResetAt == nil)
+        #expect(afterFiveHourReset.fiveHourResetAt == snapshot.fiveHourResetAt?.addingTimeInterval(5 * 60 * 60))
         #expect(afterFiveHourReset.weeklyRemainingPercent == 60)
         #expect(afterFiveHourReset.weeklyResetAt == snapshot.weeklyResetAt)
+        #expect(afterWeeklyReset.fiveHourRemainingPercent == 100)
+        #expect(afterWeeklyReset.weeklyRemainingPercent == 100)
+        #expect(afterWeeklyReset.weeklyResetAt == snapshot.weeklyResetAt?.addingTimeInterval(2 * 7 * 24 * 60 * 60))
     }
 
     @Test func codexProviderUsesLatestRateLimitEventAcrossRollouts() throws {
