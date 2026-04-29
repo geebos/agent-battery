@@ -65,7 +65,7 @@ struct BatteryIcon: View {
     }
 
     private var borderColor: Color {
-        autoColor ? autoColorForPercent : .primary
+        Color.white.opacity(0.46)
     }
 
     private var resolvedFillColor: Color {
