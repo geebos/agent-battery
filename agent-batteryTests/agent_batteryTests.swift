@@ -36,6 +36,37 @@ struct AgentBatteryTests {
         #expect(settings.dataConfiguration.claudeUsagePath == UsageDefaults.claudeUsagePath)
     }
 
+    @Test func menuBarDisplayModeIdentifiesToolIconModes() {
+        #expect(MenuBarDisplayMode.iconOnly.usesToolIcons)
+        #expect(MenuBarDisplayMode.iconAndPercent.usesToolIcons)
+        #expect(!MenuBarDisplayMode.percentOnly.usesToolIcons)
+        #expect(!MenuBarDisplayMode.batteryAndPercent.usesToolIcons)
+        #expect(!MenuBarDisplayMode.toolAndPercent.usesToolIcons)
+    }
+
+    @Test func appSettingsPersistsMenuBarIconPreferences() throws {
+        let suiteName = "agent-battery-tests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        do {
+            let settings = AppSettings(defaults: defaults)
+
+            #expect(settings.showsMenuBarIcon(for: .claudeCode))
+            #expect(settings.showsMenuBarIcon(for: .codex))
+
+            settings.showClaudeMenuBarIcon = false
+            settings.showCodexMenuBarIcon = false
+        }
+
+        let settings = AppSettings(defaults: defaults)
+
+        #expect(!settings.showsMenuBarIcon(for: .claudeCode))
+        #expect(!settings.showsMenuBarIcon(for: .codex))
+    }
+
     @Test func cachedSnapshotsProjectElapsedResetWindows() throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -117,7 +148,7 @@ struct AgentBatteryTests {
         #expect(snapshot.weeklyRemainingPercent == 90)
     }
 
-    @Test func usageStoreFetchesLatestCodexUsageOnStartup() throws {
+    @Test func usageStoreFetchesLatestCodexUsageOnStartup() async throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         let directory = FileManager.default.temporaryDirectory
@@ -143,7 +174,9 @@ struct AgentBatteryTests {
         settings.codexEnabled = true
         settings.codexSessionsPath = directory.path
         let store = UsageStore(settings: settings, snapshotCache: UsageSnapshotCache(defaults: defaults))
-        let snapshot = store.snapshot(for: .codex)
+        let snapshot = await refreshedSnapshot(from: store, for: .codex) {
+            $0.fiveHourRemainingPercent == 79
+        }
 
         #expect(snapshot.status == .available)
         #expect(snapshot.fiveHourRemainingPercent == 79)
@@ -259,6 +292,22 @@ struct AgentBatteryTests {
         {"timestamp":"\(timestamp)","type":"event_msg","payload":{"type":"token_count","info":{},"rate_limits":{"limit_id":"codex","primary":{"used_percent":\(fiveHourUsed),"window_minutes":300,"resets_at":\(Int(fiveHourResetsAt.timeIntervalSince1970))},"secondary":{"used_percent":\(weeklyUsed),"window_minutes":10080,"resets_at":\(Int(weeklyResetsAt.timeIntervalSince1970))},"plan_type":"plus"}}}
 
         """
+    }
+
+    private func refreshedSnapshot(
+        from store: UsageStore,
+        for tool: UsageTool,
+        matching predicate: (UsageSnapshot) -> Bool
+    ) async -> UsageSnapshot {
+        let deadline = Date().addingTimeInterval(2)
+        var snapshot = store.snapshot(for: tool)
+
+        while !predicate(snapshot), Date() < deadline {
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            snapshot = store.snapshot(for: tool)
+        }
+
+        return snapshot
     }
 
     private func jsonObject(from url: URL) throws -> [String: Any] {
