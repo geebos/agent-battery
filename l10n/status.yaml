@@ -1,0 +1,12 @@
+available:
+  en: "Available"
+  zh: "可用"
+unavailable:
+  en: "Unavailable"
+  zh: "不可用"
+stale:
+  en: "Stale"
+  zh: "过期"
+error:
+  en: "Error"
+  zh: "错误"

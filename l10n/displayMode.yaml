@@ -1,0 +1,12 @@
+percentOnly:
+  en: "Percent only"
+  zh: "仅百分比"
+batteryOnly:
+  en: "Battery only"
+  zh: "仅电池"
+batteryAndPercent:
+  en: "Battery + percent"
+  zh: "电池 + 百分比"
+toolAndPercent:
+  en: "Tool + percent"
+  zh: "工具 + 百分比"

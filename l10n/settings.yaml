@@ -1,0 +1,42 @@
+sectionEnabledTools:
+  en: "Enabled Tools"
+  zh: "启用的工具"
+sectionClaudeSetup:
+  en: "Claude Code Setup"
+  zh: "Claude Code 配置"
+sectionMenuBarDisplay:
+  en: "Menu Bar Display"
+  zh: "菜单栏显示"
+sectionRefresh:
+  en: "Refresh"
+  zh: "刷新"
+sectionAlertThresholds:
+  en: "Alert Thresholds"
+  zh: "提示阈值"
+sectionLaunch:
+  en: "Launch"
+  zh: "启动"
+installRepair:
+  en: "Install / Repair"
+  zh: "安装 / 修复"
+primaryTool:
+  en: "Primary tool"
+  zh: "主要工具"
+displayMode:
+  en: "Display mode"
+  zh: "显示模式"
+showWeekly:
+  en: "Show weekly usage"
+  zh: "显示每周用量"
+refreshInterval:
+  en: "Refresh interval"
+  zh: "刷新间隔"
+launchAtLogin:
+  en: "Launch at Login"
+  zh: "登录时启动"
+warningBelow:
+  en: "Warning below %lld%%"
+  zh: "低于 %lld%% 时警告"
+criticalBelow:
+  en: "Critical below %lld%%"
+  zh: "低于 %lld%% 时紧急"

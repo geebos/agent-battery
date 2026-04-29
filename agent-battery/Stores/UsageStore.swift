@@ -54,11 +54,11 @@ final class UsageStore: ObservableObject {
                 ($0.fiveHourRemainingPercent ?? 100) < ($1.fiveHourRemainingPercent ?? 100)
             }
             ?? enabledSnapshots.first
-            ?? UsageSnapshot.unavailable(tool: .claudeCode, message: "No enabled tools.")
+            ?? UsageSnapshot.unavailable(tool: .claudeCode, message: String(localized: "store.noEnabledTools"))
     }
 
     func snapshot(for tool: UsageTool) -> UsageSnapshot {
-        snapshots[tool] ?? UsageSnapshot.unavailable(tool: tool, message: "Waiting for first refresh.")
+        snapshots[tool] ?? UsageSnapshot.unavailable(tool: tool, message: String(localized: "store.waitingFirstRefresh"))
     }
 
     func level(for snapshot: UsageSnapshot) -> UsageLevel {
@@ -190,18 +190,18 @@ final class UsageStore: ObservableObject {
 
     private func fallbackMessage(from sourceSnapshot: UsageSnapshot) -> String {
         if let message = sourceSnapshot.message, !message.isEmpty {
-            return "Using cached data; \(message)"
+            return String(format: NSLocalizedString("store.usingCachedDataWith", comment: ""), message)
         }
 
-        return "Using cached data."
+        return String(localized: "store.usingCachedData")
     }
 
     private static func initialSnapshots(from snapshotCache: UsageSnapshotCache) -> [UsageTool: UsageSnapshot] {
         Dictionary(
             uniqueKeysWithValues: UsageTool.allCases.map { tool in
                 let snapshot = snapshotCache.snapshot(for: tool)?
-                    .replacingStatus(.stale, message: "Using cached data.")
-                    ?? UsageSnapshot.unavailable(tool: tool, message: "Waiting for first refresh.")
+                    .replacingStatus(.stale, message: String(localized: "store.usingCachedData"))
+                    ?? UsageSnapshot.unavailable(tool: tool, message: String(localized: "store.waitingFirstRefresh"))
                 return (tool, snapshot)
             }
         )

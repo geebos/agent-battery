@@ -20,7 +20,7 @@ struct UsageToolCardView: View {
             }
 
             UsageMeterView(
-                title: "5h Remaining",
+                title: "usage.fiveHourRemaining",
                 percent: snapshot.fiveHourRemainingPercent,
                 resetAt: snapshot.fiveHourResetAt,
                 level: level(for: snapshot.fiveHourRemainingPercent)
@@ -28,7 +28,7 @@ struct UsageToolCardView: View {
 
             if showWeeklyUsage {
                 UsageMeterView(
-                    title: "Weekly Remaining",
+                    title: "usage.weeklyRemaining",
                     percent: snapshot.weeklyRemainingPercent,
                     resetAt: snapshot.weeklyResetAt,
                     level: level(for: snapshot.weeklyRemainingPercent)
@@ -73,7 +73,7 @@ struct UsageToolCardView: View {
 }
 
 private struct UsageMeterView: View {
-    let title: String
+    let title: LocalizedStringKey
     let percent: Double?
     let resetAt: Date?
     let level: UsageLevel

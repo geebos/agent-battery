@@ -16,31 +16,31 @@ enum UsageFormatters {
 
     static func percentText(_ value: Double?) -> String {
         guard let value else {
-            return "--%"
+            return String(localized: "formatter.percentUnknown")
         }
         return "\(Int(UsageMath.clampPercent(value).rounded()))%"
     }
 
     static func resetText(_ date: Date?, now: Date = Date()) -> String {
         guard let date else {
-            return "Reset time unavailable"
+            return String(localized: "formatter.resetUnavailable")
         }
 
         let seconds = date.timeIntervalSince(now)
         guard seconds > 0 else {
-            return "Reset time passed"
+            return String(localized: "formatter.resetPassed")
         }
 
         if seconds < 24 * 60 * 60 {
             let hours = Int(seconds) / 3600
             let minutes = (Int(seconds) % 3600) / 60
             if hours > 0 {
-                return "Resets in \(hours)h \(minutes)m"
+                return String(format: NSLocalizedString("formatter.resetsInHM", comment: ""), hours, minutes)
             }
-            return "Resets in \(max(minutes, 1))m"
+            return String(format: NSLocalizedString("formatter.resetsInM", comment: ""), max(minutes, 1))
         }
 
-        return "Resets \(absoluteResetFormatter.string(from: date))"
+        return String(format: NSLocalizedString("formatter.resetsAt", comment: ""), absoluteResetFormatter.string(from: date))
     }
 
     static func updatedText(
@@ -49,22 +49,22 @@ enum UsageFormatters {
         now: Date = Date()
     ) -> String {
         guard let date else {
-            return status == .available ? "Updated time unavailable" : status.title
+            return status == .available ? String(localized: "formatter.updatedUnavailable") : status.title
         }
 
         let seconds = max(0, now.timeIntervalSince(date))
         if seconds < 60 {
-            return "Updated just now"
+            return String(localized: "formatter.updatedJustNow")
         }
 
         if seconds < 60 * 60 {
-            return "Updated \(Int(seconds / 60))m ago"
+            return String(format: NSLocalizedString("formatter.updatedMinutesAgo", comment: ""), Int(seconds / 60))
         }
 
         if seconds < 24 * 60 * 60 {
-            return "Updated \(Int(seconds / 3600))h ago"
+            return String(format: NSLocalizedString("formatter.updatedHoursAgo", comment: ""), Int(seconds / 3600))
         }
 
-        return "Updated \(clockFormatter.string(from: date))"
+        return String(format: NSLocalizedString("formatter.updatedAt", comment: ""), clockFormatter.string(from: date))
     }
 }

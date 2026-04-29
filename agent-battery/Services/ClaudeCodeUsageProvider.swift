@@ -8,7 +8,7 @@ struct ClaudeCodeUsageProvider {
         guard FileManager.default.fileExists(atPath: url.path) else {
             return .unavailable(
                 tool: .claudeCode,
-                message: "Waiting for Claude status-line output at \(configuration.claudeUsagePath)."
+                message: String(format: NSLocalizedString("provider.claudeWaiting", comment: ""), configuration.claudeUsagePath)
             )
         }
 
@@ -17,7 +17,7 @@ struct ClaudeCodeUsageProvider {
             guard
                 let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             else {
-                return .error(tool: .claudeCode, message: "Claude usage file is not a JSON object.")
+                return .error(tool: .claudeCode, message: String(localized: "provider.claudeNotJsonObject"))
             }
 
             return Self.snapshot(from: object, staleInterval: configuration.staleInterval)
@@ -48,7 +48,7 @@ struct ClaudeCodeUsageProvider {
         guard fiveRemaining != nil || weeklyRemaining != nil else {
             return .unavailable(
                 tool: .claudeCode,
-                message: "Claude rate_limits are missing from the status-line payload.",
+                message: String(localized: "provider.claudeMissingRateLimits"),
                 updatedAt: updatedAt
             )
         }
@@ -57,7 +57,7 @@ struct ClaudeCodeUsageProvider {
         let message: String?
         if let updatedAt, Date().timeIntervalSince(updatedAt) > staleInterval {
             status = .stale
-            message = "Claude data is older than 10 minutes."
+            message = String(localized: "provider.claudeStale")
         } else {
             status = .available
             message = nil

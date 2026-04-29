@@ -5,12 +5,12 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Enabled Tools") {
-                Toggle("Claude Code", isOn: $settings.claudeEnabled)
-                Toggle("Codex", isOn: $settings.codexEnabled)
+            Section("settings.sectionEnabledTools") {
+                Toggle("tool.claudeCodeName", isOn: $settings.claudeEnabled)
+                Toggle("tool.codexName", isOn: $settings.codexEnabled)
             }
 
-            Section("Claude Code Setup") {
+            Section("settings.sectionClaudeSetup") {
                 HStack {
                     Label(settings.claudeSetupStatus.title, systemImage: claudeSetupSystemImage)
                         .foregroundStyle(claudeSetupColor)
@@ -20,7 +20,7 @@ struct SettingsView: View {
                     Button {
                         settings.installClaudeCodeSetup()
                     } label: {
-                        Label("Install / Repair", systemImage: "wrench.and.screwdriver")
+                        Label("settings.installRepair", systemImage: "wrench.and.screwdriver")
                     }
                 }
 
@@ -31,24 +31,24 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Menu Bar Display") {
-                Picker("Primary tool", selection: $settings.primaryDisplayTool) {
+            Section("settings.sectionMenuBarDisplay") {
+                Picker("settings.primaryTool", selection: $settings.primaryDisplayTool) {
                     ForEach(PrimaryDisplayTool.allCases) { option in
                         Text(option.title).tag(option)
                     }
                 }
 
-                Picker("Display mode", selection: $settings.menuBarDisplayMode) {
+                Picker("settings.displayMode", selection: $settings.menuBarDisplayMode) {
                     ForEach(MenuBarDisplayMode.allCases) { mode in
                         Text(mode.title).tag(mode)
                     }
                 }
 
-                Toggle("Show weekly usage", isOn: $settings.showWeeklyUsage)
+                Toggle("settings.showWeekly", isOn: $settings.showWeeklyUsage)
             }
 
-            Section("Refresh") {
-                Picker("Refresh interval", selection: $settings.refreshInterval) {
+            Section("settings.sectionRefresh") {
+                Picker("settings.refreshInterval", selection: $settings.refreshInterval) {
                     ForEach(RefreshInterval.allCases) { interval in
                         Text(interval.title).tag(interval)
                     }
@@ -56,19 +56,19 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section("Alert Thresholds") {
+            Section("settings.sectionAlertThresholds") {
                 Stepper(value: $settings.warningThreshold, in: (settings.criticalThreshold + 1)...95) {
-                    Text("Warning below \(settings.warningThreshold)%")
+                    Text(verbatim: String(format: NSLocalizedString("settings.warningBelow", comment: ""), settings.warningThreshold))
                 }
 
                 Stepper(value: $settings.criticalThreshold, in: 1...(settings.warningThreshold - 1)) {
-                    Text("Critical below \(settings.criticalThreshold)%")
+                    Text(verbatim: String(format: NSLocalizedString("settings.criticalBelow", comment: ""), settings.criticalThreshold))
                 }
             }
 
-            Section("Launch") {
+            Section("settings.sectionLaunch") {
                 Toggle(
-                    "Launch at Login",
+                    "settings.launchAtLogin",
                     isOn: Binding(
                         get: { settings.launchAtLoginEnabled },
                         set: { settings.setLaunchAtLoginEnabled($0) }

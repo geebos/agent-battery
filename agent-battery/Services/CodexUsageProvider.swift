@@ -13,7 +13,7 @@ struct CodexUsageProvider {
             guard !rolloutURLs.isEmpty else {
                 return .unavailable(
                     tool: .codex,
-                    message: "No Codex rollout JSONL found under \(configuration.codexSessionsPath)."
+                    message: String(format: NSLocalizedString("provider.codexNoRollouts", comment: ""), configuration.codexSessionsPath)
                 )
             }
 
@@ -36,7 +36,7 @@ struct CodexUsageProvider {
             guard let latestEvent else {
                 return .unavailable(
                     tool: .codex,
-                    message: "No token_count rate_limits event found in recent Codex rollouts."
+                    message: String(localized: "provider.codexNoEvent")
                 )
             }
 
@@ -139,7 +139,7 @@ struct CodexUsageProvider {
         let message: String?
         if Date().timeIntervalSince(event.updatedAt) > staleInterval {
             status = .stale
-            message = "Codex data is older than 10 minutes."
+            message = String(localized: "provider.codexStale")
         } else {
             status = .available
             message = nil

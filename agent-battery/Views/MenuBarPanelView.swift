@@ -11,7 +11,7 @@ struct MenuBarPanelView: View {
             header
 
             if store.enabledTools.isEmpty {
-                Text("No tools enabled.")
+                Text("menu.noToolsEnabled")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 20)
@@ -34,7 +34,7 @@ struct MenuBarPanelView: View {
                         openSettings()
                     }
                 } label: {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("menu.settings", systemImage: "gearshape")
                 }
 
                 Spacer()
@@ -42,7 +42,7 @@ struct MenuBarPanelView: View {
                 Button {
                     NSApplication.shared.terminate(nil)
                 } label: {
-                    Label("Quit", systemImage: "power")
+                    Label("menu.quit", systemImage: "power")
                 }
             }
             .buttonStyle(.borderless)
@@ -53,9 +53,9 @@ struct MenuBarPanelView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Agent Battery")
+                Text("menu.appName")
                     .font(.headline)
-                Text(store.lastRefreshAt.map { UsageFormatters.updatedText($0, status: .available) } ?? "Waiting for first refresh")
+                Text(verbatim: store.lastRefreshAt.map { UsageFormatters.updatedText($0, status: .available) } ?? String(localized: "menu.waitingFirstRefresh"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -80,16 +80,16 @@ private struct StatusPill: View {
             .foregroundStyle(tint)
     }
 
-    private var title: String {
+    private var title: LocalizedStringKey {
         switch level {
         case .normal:
-            "OK"
+            "menu.statusOk"
         case .warning:
-            "Low"
+            "menu.statusLow"
         case .critical:
-            "Critical"
+            "menu.statusCritical"
         case .unavailable:
-            "No Data"
+            "menu.statusNoData"
         }
     }
 

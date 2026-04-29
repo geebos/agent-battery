@@ -91,9 +91,9 @@ struct ClaudeCodeSetupService {
 
         let message: String
         if preservedCommand == nil {
-            message = "Claude Code setup installed."
+            message = String(localized: "setup.installed")
         } else {
-            message = "Claude Code setup installed and preserved the existing status line command."
+            message = String(localized: "setup.installedPreserved")
         }
 
         return ClaudeSetupResult(status: .installed, message: message)
@@ -304,15 +304,15 @@ enum ClaudeSetupStatus: Equatable {
     var title: String {
         switch self {
         case .unknown:
-            "Unknown"
+            String(localized: "setup.statusUnknown")
         case .notInstalled:
-            "Not installed"
+            String(localized: "setup.statusNotInstalled")
         case .installed:
-            "Installed"
+            String(localized: "setup.statusInstalled")
         case .needsRepair:
-            "Needs repair"
+            String(localized: "setup.statusNeedsRepair")
         case .failed:
-            "Failed"
+            String(localized: "setup.statusFailed")
         }
     }
 }
@@ -323,7 +323,7 @@ enum ClaudeSetupError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidSettingsJSON:
-            "Claude settings.json is not a JSON object."
+            String(localized: "setup.notJsonObject")
         }
     }
 }

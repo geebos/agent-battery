@@ -14,18 +14,18 @@ enum UsageTool: String, CaseIterable, Codable, Hashable, Identifiable {
     var displayName: String {
         switch self {
         case .claudeCode:
-            "Claude Code"
+            String(localized: "tool.claudeCodeName")
         case .codex:
-            "Codex"
+            String(localized: "tool.codexName")
         }
     }
 
     var shortName: String {
         switch self {
         case .claudeCode:
-            "Claude"
+            String(localized: "tool.claudeShortName")
         case .codex:
-            "Codex"
+            String(localized: "tool.codexShortName")
         }
     }
 
@@ -48,13 +48,13 @@ enum UsageStatus: String, Codable, Hashable {
     var title: String {
         switch self {
         case .available:
-            "Available"
+            String(localized: "status.available")
         case .unavailable:
-            "Unavailable"
+            String(localized: "status.unavailable")
         case .stale:
-            "Stale"
+            String(localized: "status.stale")
         case .error:
-            "Error"
+            String(localized: "status.error")
         }
     }
 }
@@ -96,7 +96,7 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     }
 
     static func disabled(tool: UsageTool) -> UsageSnapshot {
-        unavailable(tool: tool, message: "Disabled in Settings.")
+        unavailable(tool: tool, message: String(localized: "store.disabledInSettings"))
     }
 
     static func error(tool: UsageTool, message: String) -> UsageSnapshot {
@@ -123,11 +123,11 @@ enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .automatic:
-            "Lowest remaining"
+            String(localized: "primaryTool.automatic")
         case .claudeCode:
-            "Claude Code"
+            String(localized: "primaryTool.claudeCode")
         case .codex:
-            "Codex"
+            String(localized: "primaryTool.codex")
         }
     }
 
@@ -154,13 +154,13 @@ enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .percentOnly:
-            "Percent only"
+            String(localized: "displayMode.percentOnly")
         case .batteryOnly:
-            "Battery only"
+            String(localized: "displayMode.batteryOnly")
         case .batteryAndPercent:
-            "Battery + percent"
+            String(localized: "displayMode.batteryAndPercent")
         case .toolAndPercent:
-            "Tool + percent"
+            String(localized: "displayMode.toolAndPercent")
         }
     }
 }
@@ -175,11 +175,11 @@ enum RefreshInterval: Int, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .oneMinute:
-            "1 min"
+            String(localized: "refreshInterval.oneMin")
         case .threeMinutes:
-            "3 min"
+            String(localized: "refreshInterval.threeMin")
         case .fiveMinutes:
-            "5 min"
+            String(localized: "refreshInterval.fiveMin")
         }
     }
 }
