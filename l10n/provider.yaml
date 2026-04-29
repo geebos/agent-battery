@@ -7,15 +7,9 @@ claudeNotJsonObject:
 claudeMissingRateLimits:
   en: "Claude rate_limits are missing from the status-line payload."
   zh: "状态栏数据中缺少 Claude rate_limits 字段。"
-claudeStale:
-  en: "Claude data is older than 10 minutes."
-  zh: "Claude 数据已超过 10 分钟。"
 codexNoRollouts:
   en: "No Codex rollout JSONL found under %@."
   zh: "%@ 下未找到 Codex rollout JSONL。"
 codexNoEvent:
   en: "No token_count rate_limits event found in recent Codex rollouts."
   zh: "近期 Codex rollout 中未找到 token_count rate_limits 事件。"
-codexStale:
-  en: "Codex data is older than 10 minutes."
-  zh: "Codex 数据已超过 10 分钟。"

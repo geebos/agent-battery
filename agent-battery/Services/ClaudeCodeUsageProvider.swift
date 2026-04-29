@@ -53,14 +53,10 @@ struct ClaudeCodeUsageProvider {
             )
         }
 
-        let status: UsageStatus
-        let message: String?
-        if let updatedAt, Date().timeIntervalSince(updatedAt) > staleInterval {
-            status = .stale
-            message = String(localized: "provider.claudeStale")
+        let status: UsageStatus = if let updatedAt, Date().timeIntervalSince(updatedAt) > staleInterval {
+            .stale
         } else {
-            status = .available
-            message = nil
+            .available
         }
 
         return UsageSnapshot(
@@ -71,7 +67,7 @@ struct ClaudeCodeUsageProvider {
             weeklyResetAt: weeklyResetAt,
             updatedAt: updatedAt,
             status: status,
-            message: message
+            message: nil
         )
     }
 

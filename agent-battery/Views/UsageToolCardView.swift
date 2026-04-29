@@ -8,23 +8,15 @@ struct UsageToolCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label {
-                    Text(snapshot.tool.displayName)
-                } icon: {
-                    Image(snapshot.tool.assetImageName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                }
-                .font(.headline)
-
-                Spacer()
-
-                Text(snapshot.status.title)
-                    .font(.caption)
-                    .foregroundStyle(statusColor)
+            Label {
+                Text(snapshot.tool.displayName)
+            } icon: {
+                Image(snapshot.tool.assetImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
             }
+            .font(.headline)
 
             UsageMeterView(
                 title: "usage.fiveHourRemaining",
@@ -42,32 +34,15 @@ struct UsageToolCardView: View {
                 )
             }
 
-            HStack(alignment: .firstTextBaseline) {
-                Text(UsageFormatters.updatedText(snapshot.updatedAt, status: snapshot.status))
-
-                if let message = snapshot.message {
-                    Text(message)
-                        .lineLimit(2)
-                }
+            if let message = snapshot.message {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
         .padding(12)
         .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var statusColor: Color {
-        switch snapshot.status {
-        case .available:
-            .secondary
-        case .unavailable:
-            .secondary
-        case .stale:
-            .orange
-        case .error:
-            .red
-        }
     }
 
     private func level(for percent: Double?) -> UsageLevel {
@@ -102,7 +77,7 @@ private struct UsageMeterView: View {
             ProgressView(value: progress)
                 .tint(tint)
 
-            Text(UsageFormatters.resetText(resetAt))
+            ResetScheduleText(resetAt: resetAt)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -125,6 +100,51 @@ private struct UsageMeterView: View {
             .red
         case .unavailable:
             .secondary
+        }
+    }
+}
+
+private struct ResetScheduleText: View {
+    let resetAt: Date?
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            content(now: context.date)
+        }
+    }
+
+    @ViewBuilder
+    private func content(now: Date) -> some View {
+        if let resetAt {
+            let seconds = resetAt.timeIntervalSince(now)
+            if seconds <= 0 {
+                Text("formatter.resetPassed")
+            } else if seconds <= 2 * 24 * 60 * 60 {
+                relativeResetText(resetAt, showsDetail: false)
+            } else {
+                relativeResetText(resetAt, showsDetail: true)
+            }
+        } else {
+            Text("formatter.resetUnavailable")
+        }
+    }
+
+    @ViewBuilder
+    private func relativeResetText(_ resetAt: Date, showsDetail: Bool) -> some View {
+        HStack(spacing: 0) {
+            if !UsageFormatters.resetRelativePrefixText.isEmpty {
+                Text(verbatim: UsageFormatters.resetRelativePrefixText)
+            }
+
+            Text(resetAt, style: .relative)
+
+            if !UsageFormatters.resetRelativeSuffixText.isEmpty {
+                Text(verbatim: UsageFormatters.resetRelativeSuffixText)
+            }
+
+            if showsDetail {
+                Text(verbatim: " (\(UsageFormatters.resetDetailText(resetAt)))")
+            }
         }
     }
 }

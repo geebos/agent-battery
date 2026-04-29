@@ -135,15 +135,9 @@ struct CodexUsageProvider {
         from event: ParsedRateLimitEvent,
         staleInterval: TimeInterval
     ) -> UsageSnapshot {
-        let status: UsageStatus
-        let message: String?
-        if Date().timeIntervalSince(event.updatedAt) > staleInterval {
-            status = .stale
-            message = String(localized: "provider.codexStale")
-        } else {
-            status = .available
-            message = nil
-        }
+        let status: UsageStatus = Date().timeIntervalSince(event.updatedAt) > staleInterval
+            ? .stale
+            : .available
 
         return UsageSnapshot(
             tool: .codex,
@@ -153,7 +147,7 @@ struct CodexUsageProvider {
             weeklyResetAt: event.weeklyResetAt,
             updatedAt: event.updatedAt == .distantPast ? nil : event.updatedAt,
             status: status,
-            message: message
+            message: nil
         )
     }
 

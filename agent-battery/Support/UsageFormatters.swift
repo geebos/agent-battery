@@ -1,16 +1,14 @@
 import Foundation
 
 enum UsageFormatters {
-    private static let absoluteResetFormatter: DateFormatter = {
+    private static let resetDetailFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEE HH:mm"
-        return formatter
-    }()
-
-    private static let clockFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
+        if Locale.current.identifier.hasPrefix("zh") {
+            formatter.locale = Locale(identifier: "zh_Hans")
+            formatter.dateFormat = "EEE HH:mm, M 月 d号"
+        } else {
+            formatter.dateFormat = "EEE HH:mm, MMM d"
+        }
         return formatter
     }()
 
@@ -21,50 +19,30 @@ enum UsageFormatters {
         return "\(Int(UsageMath.clampPercent(value).rounded()))%"
     }
 
-    static func resetText(_ date: Date?, now: Date = Date()) -> String {
-        guard let date else {
-            return String(localized: "formatter.resetUnavailable")
-        }
-
-        let seconds = date.timeIntervalSince(now)
-        guard seconds > 0 else {
-            return String(localized: "formatter.resetPassed")
-        }
-
-        if seconds < 24 * 60 * 60 {
-            let hours = Int(seconds) / 3600
-            let minutes = (Int(seconds) % 3600) / 60
-            if hours > 0 {
-                return String(format: NSLocalizedString("formatter.resetsInHM", comment: ""), hours, minutes)
-            }
-            return String(format: NSLocalizedString("formatter.resetsInM", comment: ""), max(minutes, 1))
-        }
-
-        return String(format: NSLocalizedString("formatter.resetsAt", comment: ""), absoluteResetFormatter.string(from: date))
+    static var resetRelativePrefixText: String {
+        localizedSegment(
+            "formatter.resetRelativePrefix",
+            fallback: isChineseLocale ? "" : "Reset in "
+        )
     }
 
-    static func updatedText(
-        _ date: Date?,
-        status: UsageStatus,
-        now: Date = Date()
-    ) -> String {
-        guard let date else {
-            return status == .available ? String(localized: "formatter.updatedUnavailable") : status.title
-        }
+    static var resetRelativeSuffixText: String {
+        localizedSegment(
+            "formatter.resetRelativeSuffix",
+            fallback: isChineseLocale ? "后重置" : ""
+        )
+    }
 
-        let seconds = max(0, now.timeIntervalSince(date))
-        if seconds < 60 {
-            return String(localized: "formatter.updatedJustNow")
-        }
+    static func resetDetailText(_ date: Date) -> String {
+        resetDetailFormatter.string(from: date)
+    }
 
-        if seconds < 60 * 60 {
-            return String(format: NSLocalizedString("formatter.updatedMinutesAgo", comment: ""), Int(seconds / 60))
-        }
+    private static var isChineseLocale: Bool {
+        Locale.current.identifier.hasPrefix("zh")
+    }
 
-        if seconds < 24 * 60 * 60 {
-            return String(format: NSLocalizedString("formatter.updatedHoursAgo", comment: ""), Int(seconds / 3600))
-        }
-
-        return String(format: NSLocalizedString("formatter.updatedAt", comment: ""), clockFormatter.string(from: date))
+    private static func localizedSegment(_ key: String, fallback: String) -> String {
+        let value = NSLocalizedString(key, comment: "")
+        return value == key ? fallback : value
     }
 }

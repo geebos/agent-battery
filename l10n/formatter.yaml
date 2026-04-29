@@ -7,6 +7,12 @@ resetUnavailable:
 resetPassed:
   en: "Reset time passed"
   zh: "重置时间已过"
+resetRelativePrefix:
+  en: "Reset in "
+  zh: ""
+resetRelativeSuffix:
+  en: ""
+  zh: "后重置"
 resetsInHM:
   en: "Resets in %lldh %lldm"
   zh: "%lld 小时 %lld 分后重置"

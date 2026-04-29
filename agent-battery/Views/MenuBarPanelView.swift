@@ -52,13 +52,8 @@ struct MenuBarPanelView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("menu.appName")
-                    .font(.headline)
-                Text(verbatim: store.lastRefreshAt.map { UsageFormatters.updatedText($0, status: .available) } ?? String(localized: "menu.waitingFirstRefresh"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text("menu.appName")
+                .font(.headline)
 
             Spacer()
 
