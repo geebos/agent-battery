@@ -46,3 +46,5 @@ fastlane/test_output
 .env
 .env.*
 
+# Generated localization (run `make l10n` to regenerate)
+agent-battery/Shared/Localization/Localizable.xcstrings
