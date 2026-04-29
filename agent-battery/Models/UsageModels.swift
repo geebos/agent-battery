@@ -37,6 +37,15 @@ enum UsageTool: String, CaseIterable, Codable, Hashable, Identifiable {
             "terminal"
         }
     }
+
+    var assetImageName: String {
+        switch self {
+        case .claudeCode:
+            "claude"
+        case .codex:
+            "codex"
+        }
+    }
 }
 
 enum UsageStatus: String, Codable, Hashable {

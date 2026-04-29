@@ -9,8 +9,15 @@ struct UsageToolCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label(snapshot.tool.displayName, systemImage: snapshot.tool.systemImage)
-                    .font(.headline)
+                Label {
+                    Text(snapshot.tool.displayName)
+                } icon: {
+                    Image(snapshot.tool.assetImageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                }
+                .font(.headline)
 
                 Spacer()
 
@@ -47,7 +54,7 @@ struct UsageToolCardView: View {
             .foregroundStyle(.secondary)
         }
         .padding(12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var statusColor: Color {
