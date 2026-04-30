@@ -35,9 +35,15 @@ struct SettingsView: View {
             Section("settings.sectionMenuBarDisplay") {
                 Picker("settings.displayMode", selection: $settings.menuBarDisplayMode) {
                     ForEach(MenuBarDisplayMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                        HStack(spacing: 12) {
+                            Text(mode.title)
+                                .frame(width: 80, alignment: .leading)
+                            MenuBarModePreviewRow(settings: settings, mode: mode)
+                        }
+                        .tag(mode)
                     }
                 }
+                .pickerStyle(.radioGroup)
 
                 Picker("settings.showSection", selection: $settings.primaryDisplayTool) {
                     Text("settings.showLowest").tag(PrimaryDisplayTool.automatic)
