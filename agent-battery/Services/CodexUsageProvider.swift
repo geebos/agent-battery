@@ -1,7 +1,7 @@
 import Foundation
 
 struct CodexUsageProvider {
-    private let maxTailBytes = 1_048_576
+    private let tailChunkBytes = 1_048_576
     private let maxRolloutFilesToScan = 80
 
     func fetch(configuration: UsageDataConfiguration) -> UsageSnapshot {
@@ -18,13 +18,14 @@ struct CodexUsageProvider {
             }
 
             var latestEvent: ParsedRateLimitEvent?
-            for rolloutURL in rolloutURLs.prefix(maxRolloutFilesToScan) {
-                let data = try tailData(from: rolloutURL)
-                guard let text = String(data: data, encoding: .utf8) else {
-                    continue
+            for rollout in rolloutURLs.prefix(maxRolloutFilesToScan) {
+                if let latestEvent,
+                   latestEvent.updatedAt != .distantPast,
+                   rollout.modifiedAt < latestEvent.updatedAt {
+                    break
                 }
 
-                guard let event = parseLatestRateLimitEvent(from: text, fileURL: rolloutURL) else {
+                guard let event = try parseLatestRateLimitEvent(from: rollout.url) else {
                     continue
                 }
 
@@ -46,14 +47,21 @@ struct CodexUsageProvider {
         }
     }
 
-    private func rolloutFiles(from rootURL: URL) throws -> [URL] {
+    private func rolloutFiles(from rootURL: URL) throws -> [RolloutFile] {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: rootURL.path, isDirectory: &isDirectory) else {
             return []
         }
 
         if !isDirectory.boolValue {
-            return rootURL.pathExtension == "jsonl" ? [rootURL] : []
+            guard rootURL.pathExtension == "jsonl" else {
+                return []
+            }
+
+            return [RolloutFile(
+                url: rootURL,
+                modifiedAt: modificationDate(for: rootURL) ?? .distantPast
+            )]
         }
 
         let keys: [URLResourceKey] = [.contentModificationDateKey, .isRegularFileKey]
@@ -82,19 +90,40 @@ struct CodexUsageProvider {
 
         return files
             .sorted { $0.modifiedAt > $1.modifiedAt }
-            .map(\.url)
+            .map { RolloutFile(url: $0.url, modifiedAt: $0.modifiedAt) }
     }
 
-    private func tailData(from url: URL) throws -> Data {
+    private func parseLatestRateLimitEvent(from url: URL) throws -> ParsedRateLimitEvent? {
         let handle = try FileHandle(forReadingFrom: url)
         defer {
             try? handle.close()
         }
 
         let size = try handle.seekToEnd()
-        let offset = size > UInt64(maxTailBytes) ? size - UInt64(maxTailBytes) : 0
-        try handle.seek(toOffset: offset)
-        return try handle.readToEnd() ?? Data()
+        var offset = size
+        var tail = Data()
+
+        while offset > 0 {
+            let readSize = min(UInt64(tailChunkBytes), offset)
+            offset -= readSize
+            try handle.seek(toOffset: offset)
+
+            guard let chunk = try handle.read(upToCount: Int(readSize)), !chunk.isEmpty else {
+                continue
+            }
+
+            var expandedTail = Data(capacity: chunk.count + tail.count)
+            expandedTail.append(chunk)
+            expandedTail.append(tail)
+            tail = expandedTail
+
+            let text = String(decoding: tail, as: UTF8.self)
+            if let event = parseLatestRateLimitEvent(from: text, fileURL: url) {
+                return event
+            }
+        }
+
+        return nil
     }
 
     private func parseLatestRateLimitEvent(
@@ -212,11 +241,29 @@ struct CodexUsageProvider {
         }
 
         if let string = value as? String {
-            return ISO8601DateFormatter().date(from: string)
+            let stripped = string.strippingFractionalSeconds()
+            if let date = ISO8601DateFormatter().date(from: stripped) {
+                return date
+            }
+
+            return dateWithoutTimeZone(from: stripped)
         }
 
         return nil
     }
+
+    private func dateWithoutTimeZone(from string: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        return formatter.date(from: string)
+    }
+}
+
+private struct RolloutFile {
+    let url: URL
+    let modifiedAt: Date
 }
 
 private struct ParsedRateLimitEvent {
@@ -225,4 +272,19 @@ private struct ParsedRateLimitEvent {
     let fiveHourResetAt: Date?
     let weeklyResetAt: Date?
     let updatedAt: Date
+}
+
+private extension String {
+    func strippingFractionalSeconds() -> String {
+        guard let dotIndex = firstIndex(of: ".") else {
+            return self
+        }
+
+        var suffixIndex = index(after: dotIndex)
+        while suffixIndex < endIndex, self[suffixIndex].isNumber {
+            suffixIndex = index(after: suffixIndex)
+        }
+
+        return String(self[..<dotIndex] + self[suffixIndex...])
+    }
 }
