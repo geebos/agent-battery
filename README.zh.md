@@ -1,8 +1,11 @@
 <p align="center">
   <img src="assets/icon.png" alt="Agent Battery 图标" width="96" />
   <br />
-  <span style="font-size: 32px;"><strong>Agent Battery</strong></span>
-  <br />
+</p>
+
+<h1 align="center">Agent Battery</h1>
+
+<p align="center">
   <a href="https://github.com/geebos/agent-battery/releases/latest">
     <img src="https://img.shields.io/github/v/release/geebos/agent-battery?label=release" alt="最新发布版本" />
   </a>
