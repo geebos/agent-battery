@@ -60,6 +60,10 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. 国际化（i18n）
+
+**所有文案改动通过 `make l10n` 处理，不要直接编辑 `Localizable.xcstrings`。** 详细流程参见 `l10n-management` skill（`.claude/skills/l10n-management`），需要新增/修改/删除文案时请先调用该 skill。
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
