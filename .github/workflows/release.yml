@@ -49,6 +49,9 @@ jobs:
       - name: Generate localization catalog
         run: make l10n
 
+      - name: Install create-dmg
+        run: brew install create-dmg
+
       - name: Build unsigned universal app
         run: |
           set -euo pipefail
@@ -97,14 +100,18 @@ jobs:
           rm -rf "$DMG_ROOT"
           mkdir -p "$DMG_ROOT"
           ditto "$APP_PATH" "$DMG_ROOT/$APP_NAME.app"
-          ln -s /Applications "$DMG_ROOT/Applications"
 
-          hdiutil create \
-            -volname "$APP_NAME" \
-            -srcfolder "$DMG_ROOT" \
-            -ov \
-            -format UDZO \
-            "$DMG_PATH"
+          rm -f "$DMG_PATH"
+          create-dmg \
+            --volname "$APP_NAME" \
+            --window-pos 200 150 \
+            --window-size 540 380 \
+            --icon-size 100 \
+            --icon "$APP_NAME.app" 140 180 \
+            --app-drop-link 400 180 \
+            --no-internet-enable \
+            "$DMG_PATH" \
+            "$DMG_ROOT"
 
           shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
 
