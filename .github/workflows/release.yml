@@ -19,6 +19,7 @@ env:
   SCHEME: agent-battery
   CONFIGURATION: Release
   APP_NAME: agent-battery
+  DISPLAY_NAME: Agent Battery
   BUILD_DIR: build/release
 
 jobs:
@@ -52,6 +53,25 @@ jobs:
       - name: Install create-dmg
         run: brew install create-dmg
 
+      - name: Resolve release version
+        env:
+          INPUT_TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            RELEASE_TAG="$INPUT_TAG_NAME"
+          else
+            RELEASE_TAG="$GITHUB_REF_NAME"
+          fi
+
+          MARKETING_VERSION="${RELEASE_TAG#v}"
+          BUILD_NUMBER="$GITHUB_RUN_NUMBER"
+
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "MARKETING_VERSION=$MARKETING_VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+
       - name: Build unsigned universal app
         run: |
           set -euo pipefail
@@ -71,21 +91,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             build
 
       - name: Package DMG
-        env:
-          INPUT_TAG_NAME: ${{ inputs.tag_name }}
         run: |
           set -euo pipefail
 
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            RELEASE_TAG="$INPUT_TAG_NAME"
-          else
-            RELEASE_TAG="$GITHUB_REF_NAME"
-          fi
-
-          VERSION="${RELEASE_TAG#v}"
+          VERSION="$MARKETING_VERSION"
           APP_PATH="$BUILD_DIR/DerivedData/Build/Products/$CONFIGURATION/$APP_NAME.app"
           EXECUTABLE_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
           DMG_ROOT="$BUILD_DIR/dmg-root"
@@ -99,15 +113,15 @@ jobs:
 
           rm -rf "$DMG_ROOT"
           mkdir -p "$DMG_ROOT"
-          ditto "$APP_PATH" "$DMG_ROOT/$APP_NAME.app"
+          ditto "$APP_PATH" "$DMG_ROOT/$DISPLAY_NAME.app"
 
           rm -f "$DMG_PATH"
           create-dmg \
-            --volname "$APP_NAME" \
+            --volname "$DISPLAY_NAME" \
             --window-pos 200 150 \
             --window-size 540 380 \
             --icon-size 100 \
-            --icon "$APP_NAME.app" 140 180 \
+            --icon "$DISPLAY_NAME.app" 140 180 \
             --app-drop-link 400 180 \
             --no-internet-enable \
             "$DMG_PATH" \
@@ -115,7 +129,6 @@ jobs:
 
           shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
 
-          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
           echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
           echo "SHA256_PATH=$DMG_PATH.sha256" >> "$GITHUB_ENV"
 
