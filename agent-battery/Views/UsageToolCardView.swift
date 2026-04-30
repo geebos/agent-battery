@@ -75,7 +75,9 @@ private struct UsageMeterView: View {
             }
 
             ProgressView(value: progress)
+                .progressViewStyle(.linear)
                 .tint(tint)
+                .accentColor(tint)
 
             ResetScheduleText(resetAt: resetAt)
                 .font(.caption2)

@@ -93,5 +93,26 @@ struct SettingsWindowIdentifierView: NSViewRepresentable {
         }
 
         window.identifier = SettingsWindowPresenter.windowIdentifier
+        SettingsWindowPresenter.attachColorPanelAutoClose(to: window)
+    }
+}
+
+extension SettingsWindowPresenter {
+    private static var observedWindows = NSHashTable<NSWindow>.weakObjects()
+
+    static func attachColorPanelAutoClose(to window: NSWindow) {
+        guard !observedWindows.contains(window) else { return }
+        observedWindows.add(window)
+
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { _ in
+            let panel = NSColorPanel.shared
+            if panel.isVisible {
+                panel.close()
+            }
+        }
     }
 }

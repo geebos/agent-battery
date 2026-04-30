@@ -148,6 +148,7 @@ private final class ColorPanelController: NSObject {
     static let shared = ColorPanelController()
 
     private var callback: ((NSColor) -> Void)?
+    private var closeObserver: NSObjectProtocol?
 
     func present(initial: NSColor, callback: @escaping (NSColor) -> Void) {
         self.callback = callback
@@ -158,9 +159,27 @@ private final class ColorPanelController: NSObject {
         panel.setTarget(self)
         panel.setAction(#selector(colorChanged(_:)))
         panel.makeKeyAndOrderFront(nil)
+
+        if closeObserver == nil {
+            closeObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: panel,
+                queue: .main
+            ) { [weak self] _ in
+                self?.detach()
+            }
+        }
+    }
+
+    private func detach() {
+        callback = nil
+        let panel = NSColorPanel.shared
+        panel.setTarget(nil)
+        panel.setAction(nil)
     }
 
     @objc private func colorChanged(_ sender: NSColorPanel) {
+        guard sender.isVisible else { return }
         callback?(sender.color)
     }
 }
