@@ -72,63 +72,13 @@ jobs:
           echo "MARKETING_VERSION=$MARKETING_VERSION" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
 
-      - name: Build unsigned universal app
+      - name: Build & package DMG
         run: |
           set -euo pipefail
 
-          rm -rf "$BUILD_DIR"
-          mkdir -p "$BUILD_DIR"
+          script/release_build.sh dmg
 
-          xcodebuild \
-            -project "$PROJECT" \
-            -scheme "$SCHEME" \
-            -configuration "$CONFIGURATION" \
-            -destination "generic/platform=macOS" \
-            -derivedDataPath "$BUILD_DIR/DerivedData" \
-            ARCHS="arm64 x86_64" \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
-            MARKETING_VERSION="$MARKETING_VERSION" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            build
-
-      - name: Package DMG
-        run: |
-          set -euo pipefail
-
-          VERSION="$MARKETING_VERSION"
-          APP_PATH="$BUILD_DIR/DerivedData/Build/Products/$CONFIGURATION/$APP_NAME.app"
-          EXECUTABLE_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
-          DMG_ROOT="$BUILD_DIR/dmg-root"
-          DMG_NAME="$APP_NAME-$VERSION-universal-unsigned.dmg"
-          DMG_PATH="$BUILD_DIR/$DMG_NAME"
-
-          test -d "$APP_PATH"
-          lipo -info "$EXECUTABLE_PATH"
-          lipo "$EXECUTABLE_PATH" -verify_arch arm64 x86_64
-          codesign -dv "$APP_PATH" 2>&1 || true
-
-          rm -rf "$DMG_ROOT"
-          mkdir -p "$DMG_ROOT"
-          ditto "$APP_PATH" "$DMG_ROOT/$DISPLAY_NAME.app"
-
-          rm -f "$DMG_PATH"
-          create-dmg \
-            --volname "$DISPLAY_NAME" \
-            --window-pos 200 150 \
-            --window-size 540 380 \
-            --icon-size 100 \
-            --icon "$DISPLAY_NAME.app" 140 180 \
-            --app-drop-link 400 180 \
-            --no-internet-enable \
-            "$DMG_PATH" \
-            "$DMG_ROOT"
-
-          shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
-
+          DMG_PATH="$BUILD_DIR/$APP_NAME-$MARKETING_VERSION-universal-unsigned.dmg"
           echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
           echo "SHA256_PATH=$DMG_PATH.sha256" >> "$GITHUB_ENV"
 
