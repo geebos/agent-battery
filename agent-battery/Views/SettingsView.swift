@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct SettingsView: View {
@@ -59,7 +60,7 @@ struct SettingsView: View {
             }
 
             Section("settings.sectionRefresh") {
-                Picker("settings.refreshInterval", selection: $settings.refreshInterval) {
+                Picker("settings.refreshInterval", selection: refreshIntervalSelection) {
                     ForEach(RefreshInterval.allCases) { interval in
                         Text(interval.title).tag(interval)
                     }
@@ -86,6 +87,23 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 520)
         .background(SettingsWindowIdentifierView())
+    }
+
+    private var refreshIntervalSelection: Binding<RefreshInterval> {
+        Binding(
+            get: {
+                settings.refreshInterval
+            },
+            set: { newValue in
+                guard settings.refreshInterval != newValue else {
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    settings.refreshInterval = newValue
+                }
+            }
+        )
     }
 
     private var claudeSetupSystemImage: String {

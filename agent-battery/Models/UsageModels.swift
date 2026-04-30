@@ -174,18 +174,18 @@ enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
 }
 
 enum RefreshInterval: Int, CaseIterable, Identifiable {
+    case thirtySeconds = 30
     case oneMinute = 60
-    case threeMinutes = 180
     case fiveMinutes = 300
 
     var id: Int { rawValue }
 
     var title: String {
         switch self {
+        case .thirtySeconds:
+            String(localized: "refreshInterval.thirtySec")
         case .oneMinute:
             String(localized: "refreshInterval.oneMin")
-        case .threeMinutes:
-            String(localized: "refreshInterval.threeMin")
         case .fiveMinutes:
             String(localized: "refreshInterval.fiveMin")
         }
