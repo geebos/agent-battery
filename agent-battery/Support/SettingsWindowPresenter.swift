@@ -1,18 +1,27 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 enum SettingsWindowPresenter {
     static let windowIdentifier = NSUserInterfaceItemIdentifier("agent-battery.settings")
+    private static var focusRequestID = 0
 
-    static func show(openSettings: () -> Void) {
-        NSApplication.shared.activate(ignoringOtherApps: true)
+    static func show(dismissingMenuBarPanel dismissMenuBarPanel: @escaping () -> Void, openSettings: @escaping () -> Void) {
+        focusRequestID += 1
+        let requestID = focusRequestID
 
-        if focusExistingWindow() {
-            return
+        dismissMenuBarPanel()
+
+        scheduleFocus(after: 0.08, requestID: requestID) {
+            NSApplication.shared.activate(ignoringOtherApps: true)
+
+            if focusExistingWindow() {
+                return
+            }
+
+            openSettings()
+            focusWhenWindowIsReady(requestID: requestID)
         }
-
-        openSettings()
-        focusWhenWindowIsReady()
     }
 
     @discardableResult
@@ -24,7 +33,6 @@ enum SettingsWindowPresenter {
         NSApplication.shared.activate(ignoringOtherApps: true)
         window.deminiaturize(nil)
         window.makeKeyAndOrderFront(nil)
-        window.orderFrontRegardless()
         return true
     }
 
@@ -34,17 +42,31 @@ enum SettingsWindowPresenter {
         }
     }
 
-    private static func focusWhenWindowIsReady() {
-        retryFocus(attemptsRemaining: 30)
+    private static func focusWhenWindowIsReady(requestID: Int) {
+        retryFocus(attemptsRemaining: 30, requestID: requestID)
     }
 
-    private static func retryFocus(attemptsRemaining: Int) {
-        DispatchQueue.main.async {
-            if focusExistingWindow() || attemptsRemaining <= 0 {
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                retryFocus(attemptsRemaining: attemptsRemaining - 1)
+    private static func retryFocus(attemptsRemaining: Int, requestID: Int) {
+        guard requestID == focusRequestID else {
+            return
+        }
+
+        if focusExistingWindow() || attemptsRemaining <= 0 {
+            return
+        }
+
+        scheduleFocus(after: 0.05, requestID: requestID) {
+            retryFocus(attemptsRemaining: attemptsRemaining - 1, requestID: requestID)
+        }
+    }
+
+    private static func scheduleFocus(after delay: TimeInterval, requestID: Int, _ action: @escaping @MainActor () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            Task { @MainActor in
+                guard requestID == focusRequestID else {
+                    return
+                }
+                action()
             }
         }
     }

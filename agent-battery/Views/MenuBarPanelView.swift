@@ -5,6 +5,7 @@ struct MenuBarPanelView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var store: UsageStore
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -30,7 +31,9 @@ struct MenuBarPanelView: View {
 
             HStack {
                 Button {
-                    SettingsWindowPresenter.show {
+                    SettingsWindowPresenter.show(dismissingMenuBarPanel: {
+                        dismiss()
+                    }) {
                         openSettings()
                     }
                 } label: {
