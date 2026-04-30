@@ -1,0 +1,39 @@
+percentUnknown:
+  en: "--%"
+  zh: "--%"
+resetUnavailable:
+  en: "Reset time unavailable"
+  zh: "重置时间未知"
+resetPassed:
+  en: "Reset time passed"
+  zh: "重置时间已过"
+resetRelativePrefix:
+  en: "Reset in "
+  zh: ""
+resetRelativeSuffix:
+  en: ""
+  zh: "后重置"
+resetsInHM:
+  en: "Resets in %lldh %lldm"
+  zh: "%lld 小时 %lld 分后重置"
+resetsInM:
+  en: "Resets in %lldm"
+  zh: "%lld 分后重置"
+resetsAt:
+  en: "Resets %@"
+  zh: "%@ 重置"
+updatedUnavailable:
+  en: "Updated time unavailable"
+  zh: "更新时间未知"
+updatedJustNow:
+  en: "Updated just now"
+  zh: "刚刚更新"
+updatedMinutesAgo:
+  en: "Updated %lldm ago"
+  zh: "%lld 分钟前更新"
+updatedHoursAgo:
+  en: "Updated %lldh ago"
+  zh: "%lld 小时前更新"
+updatedAt:
+  en: "Updated %@"
+  zh: "%@ 更新"

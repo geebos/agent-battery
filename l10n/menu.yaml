@@ -1,0 +1,27 @@
+noToolsEnabled:
+  en: "No tools enabled."
+  zh: "未启用任何工具。"
+settings:
+  en: "Settings"
+  zh: "设置"
+quit:
+  en: "Quit"
+  zh: "退出"
+appName:
+  en: "Agent Battery"
+  zh: "Agent Battery"
+waitingFirstRefresh:
+  en: "Waiting for first refresh"
+  zh: "等待首次刷新"
+statusOk:
+  en: "OK"
+  zh: "正常"
+statusLow:
+  en: "Low"
+  zh: "偏低"
+statusCritical:
+  en: "Critical"
+  zh: "紧急"
+statusNoData:
+  en: "No Data"
+  zh: "无数据"

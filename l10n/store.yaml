@@ -1,0 +1,15 @@
+noEnabledTools:
+  en: "No enabled tools."
+  zh: "未启用任何工具。"
+waitingFirstRefresh:
+  en: "Waiting for first refresh."
+  zh: "等待首次刷新。"
+disabledInSettings:
+  en: "Disabled in Settings."
+  zh: "已在设置中禁用。"
+usingCachedData:
+  en: "Using cached data."
+  zh: "正在使用缓存数据。"
+usingCachedDataWith:
+  en: "Using cached data; %@"
+  zh: "正在使用缓存数据；%@"

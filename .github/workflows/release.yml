@@ -1,0 +1,137 @@
+name: Release macOS DMG
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to create or update"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+env:
+  PROJECT: agent-battery.xcodeproj
+  SCHEME: agent-battery
+  CONFIGURATION: Release
+  APP_NAME: agent-battery
+  BUILD_DIR: build/release
+
+jobs:
+  build-and-release:
+    name: Build unsigned universal DMG
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          xcrun --sdk macosx --show-sdk-version
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install localization tooling
+        run: python3 -m pip install PyYAML
+
+      - name: Generate localization catalog
+        run: make l10n
+
+      - name: Build unsigned universal app
+        run: |
+          set -euo pipefail
+
+          rm -rf "$BUILD_DIR"
+          mkdir -p "$BUILD_DIR"
+
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -destination "generic/platform=macOS" \
+            -derivedDataPath "$BUILD_DIR/DerivedData" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Package DMG
+        env:
+          INPUT_TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            RELEASE_TAG="$INPUT_TAG_NAME"
+          else
+            RELEASE_TAG="$GITHUB_REF_NAME"
+          fi
+
+          VERSION="${RELEASE_TAG#v}"
+          APP_PATH="$BUILD_DIR/DerivedData/Build/Products/$CONFIGURATION/$APP_NAME.app"
+          EXECUTABLE_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
+          DMG_ROOT="$BUILD_DIR/dmg-root"
+          DMG_NAME="$APP_NAME-$VERSION-universal-unsigned.dmg"
+          DMG_PATH="$BUILD_DIR/$DMG_NAME"
+
+          test -d "$APP_PATH"
+          lipo -info "$EXECUTABLE_PATH"
+          lipo "$EXECUTABLE_PATH" -verify_arch arm64 x86_64
+          codesign -dv "$APP_PATH" 2>&1 || true
+
+          rm -rf "$DMG_ROOT"
+          mkdir -p "$DMG_ROOT"
+          ditto "$APP_PATH" "$DMG_ROOT/$APP_NAME.app"
+          ln -s /Applications "$DMG_ROOT/Applications"
+
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder "$DMG_ROOT" \
+            -ov \
+            -format UDZO \
+            "$DMG_PATH"
+
+          shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
+
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
+          echo "SHA256_PATH=$DMG_PATH.sha256" >> "$GITHUB_ENV"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-battery-universal-unsigned-dmg
+          path: |
+            build/release/*.dmg
+            build/release/*.dmg.sha256
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$DMG_PATH" "$SHA256_PATH" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$DMG_PATH" "$SHA256_PATH" \
+              --target "$GITHUB_SHA" \
+              --title "$RELEASE_TAG" \
+              --notes "Unsigned universal macOS build for Apple silicon and Intel Macs."
+          fi

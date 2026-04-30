@@ -1,0 +1,24 @@
+installed:
+  en: "Claude Code setup installed."
+  zh: "已安装 Claude Code 配置。"
+installedPreserved:
+  en: "Claude Code setup installed and preserved the existing status line command."
+  zh: "已安装 Claude Code 配置，并保留原有的状态栏命令。"
+statusUnknown:
+  en: "Unknown"
+  zh: "未知"
+statusNotInstalled:
+  en: "Not installed"
+  zh: "未安装"
+statusInstalled:
+  en: "Installed"
+  zh: "已安装"
+statusNeedsRepair:
+  en: "Needs repair"
+  zh: "需要修复"
+statusFailed:
+  en: "Failed"
+  zh: "安装失败"
+notJsonObject:
+  en: "Claude settings.json is not a JSON object."
+  zh: "Claude settings.json 不是 JSON 对象。"
