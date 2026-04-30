@@ -16,6 +16,12 @@ sectionAlertThresholds:
 sectionLaunch:
   en: "Launch"
   zh: "启动"
+sectionAbout:
+  en: "About"
+  zh: "关于"
+version:
+  en: "Version"
+  zh: "版本"
 installRepair:
   en: "Install / Repair"
   zh: "安装 / 修复"

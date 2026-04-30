@@ -89,6 +89,16 @@ struct SettingsView: View {
                         .foregroundStyle(.red)
                 }
             }
+
+            Section("settings.sectionAbout") {
+                HStack {
+                    Text("settings.version")
+                    Spacer()
+                    Text(Self.appVersionDisplay)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            }
         }
         .formStyle(.grouped)
         .frame(width: 520)
@@ -126,6 +136,22 @@ struct SettingsView: View {
             "xmark.octagon.fill"
         }
     }
+
+    private static let appVersionDisplay: String = {
+        let info = Bundle.main.infoDictionary
+        let version = (info?["CFBundleShortVersionString"] as? String) ?? ""
+        let build = (info?["CFBundleVersion"] as? String) ?? ""
+        if version.isEmpty && build.isEmpty {
+            return "-"
+        }
+        if build.isEmpty {
+            return "v\(version)"
+        }
+        if version.isEmpty {
+            return "(\(build))"
+        }
+        return "v\(version) (\(build))"
+    }()
 
     private var claudeSetupColor: Color {
         switch settings.claudeSetupStatus {
