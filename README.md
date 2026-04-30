@@ -1,12 +1,20 @@
-English | [中文](README.zh.md)
+<p align="center">
+  <img src="assets/icon.png" alt="Agent Battery icon" width="96" />
+  <br />
+  <span style="font-size: 32px;"><strong>Agent Battery</strong></span>
+  <br />
+  <a href="https://github.com/geebos/agent-battery/releases/latest">
+    <img src="https://img.shields.io/github/v/release/geebos/agent-battery?label=release" alt="Latest release" />
+  </a>
+  <br />
+</p>
 
-# Agent Battery
+English | [中文](README.zh.md)
 
 A lightweight macOS menu bar app that displays the remaining usage quota of **Claude Code** and **Codex** as a battery-style percentage, so you can always know how much is left in your 5-hour and weekly windows.
 
 <p align="center">
-  <img src="assets/menu-en.png" alt="Menu preview" width="48%" />
-  <img src="assets/setting-en.png" alt="Settings preview" width="48%" />
+  <img src="assets/setting-en.png" alt="Settings preview" width="70%" />
 </p>
 
 ## Features
