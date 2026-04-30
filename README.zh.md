@@ -1,10 +1,13 @@
 [English](README.md) | 中文
 
-# agent-battery
+# Agent Battery
 
 一个 macOS 状态栏小工具，用「电量百分比」的形式展示 **Claude Code** 与 **Codex** 的 usage 剩余额度，让你随时知道 5 小时窗口和每周额度还剩多少。
 
-platform swift
+<p align="center">
+  <img src="assets/menu-zh.png" alt="菜单预览" width="48%" />
+  <img src="assets/setting-zh.png" alt="设置预览" width="48%" />
+</p>
 
 ## 功能
 

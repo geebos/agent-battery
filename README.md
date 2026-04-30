@@ -1,10 +1,13 @@
 English | [中文](README.zh.md)
 
-# agent-battery
+# Agent Battery
 
 A lightweight macOS menu bar app that displays the remaining usage quota of **Claude Code** and **Codex** as a battery-style percentage, so you can always know how much is left in your 5-hour and weekly windows.
 
-platform swift
+<p align="center">
+  <img src="assets/menu-en.png" alt="Menu preview" width="48%" />
+  <img src="assets/setting-en.png" alt="Settings preview" width="48%" />
+</p>
 
 ## Features
 
