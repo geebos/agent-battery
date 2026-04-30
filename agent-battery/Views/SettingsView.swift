@@ -98,6 +98,23 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                 }
+
+                HStack {
+                    Text("settings.github")
+                    Spacer()
+                    Link(
+                        "github.com/geebos/agent-battery",
+                        destination: URL(string: "https://github.com/geebos/agent-battery")!
+                    )
+                }
+
+                HStack(spacing: 6) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(.yellow)
+                    Text("settings.starHint")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)

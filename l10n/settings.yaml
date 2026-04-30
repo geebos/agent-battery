@@ -22,6 +22,12 @@ sectionAbout:
 version:
   en: "Version"
   zh: "版本"
+github:
+  en: "GitHub"
+  zh: "GitHub"
+starHint:
+  en: "If you find it useful, please give us a Star on GitHub!"
+  zh: "如果觉得好用，欢迎在 GitHub 点个 Star 支持一下！"
 installRepair:
   en: "Install / Repair"
   zh: "安装 / 修复"
