@@ -148,6 +148,68 @@ struct AgentBatteryTests {
         #expect(snapshot.weeklyRemainingPercent == 90)
     }
 
+    @Test func codexProviderParsesFractionalSecondTimestamps() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("agent-battery-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let rolloutURL = directory.appendingPathComponent("rollout-fractional.jsonl")
+        try codexLine(
+            timestamp: "2026-04-30T04:10:46.547Z",
+            fiveHourUsed: 6,
+            weeklyUsed: 39
+        ).write(to: rolloutURL, atomically: true, encoding: .utf8)
+
+        let snapshot = CodexUsageProvider().fetch(
+            configuration: UsageDataConfiguration(
+                claudeUsagePath: "",
+                codexSessionsPath: directory.path,
+                staleInterval: .greatestFiniteMagnitude
+            )
+        )
+        let expectedUpdatedAt = try #require(ISO8601DateFormatter().date(from: "2026-04-30T04:10:46Z"))
+
+        #expect(snapshot.status == .available)
+        #expect(snapshot.updatedAt == expectedUpdatedAt)
+        #expect(snapshot.fiveHourRemainingPercent == 94)
+        #expect(snapshot.weeklyRemainingPercent == 61)
+    }
+
+    @Test func codexProviderExpandsTailUntilTokenCountIsFound() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("agent-battery-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let rolloutURL = directory.appendingPathComponent("rollout-large-tail.jsonl")
+        let padding = """
+        {"timestamp":"2026-04-30T04:11:00Z","type":"event_msg","payload":{"type":"exec_command_end","output":"\(String(repeating: "x", count: 1_100_000))"}}
+
+        """
+        try (codexLine(
+            timestamp: "2026-04-30T04:10:46Z",
+            fiveHourUsed: 12,
+            weeklyUsed: 25
+        ) + padding).write(to: rolloutURL, atomically: true, encoding: .utf8)
+
+        let snapshot = CodexUsageProvider().fetch(
+            configuration: UsageDataConfiguration(
+                claudeUsagePath: "",
+                codexSessionsPath: directory.path,
+                staleInterval: .greatestFiniteMagnitude
+            )
+        )
+
+        #expect(snapshot.status == .available)
+        #expect(snapshot.fiveHourRemainingPercent == 88)
+        #expect(snapshot.weeklyRemainingPercent == 75)
+    }
+
     @Test func usageStoreFetchesLatestCodexUsageOnStartup() async throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
