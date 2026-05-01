@@ -35,7 +35,7 @@ struct SettingsView: View {
             Section("settings.sectionMenuBarDisplay") {
                 Picker("settings.displayMode", selection: $settings.menuBarDisplayMode) {
                     ForEach(MenuBarDisplayMode.allCases) { mode in
-                        HStack(spacing: 12) {
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
                             Text(mode.title)
                                 .frame(width: 80, alignment: .leading)
                             MenuBarModePreviewRow(settings: settings, mode: mode)
@@ -46,9 +46,10 @@ struct SettingsView: View {
                 .pickerStyle(.radioGroup)
 
                 Picker("settings.showSection", selection: $settings.primaryDisplayTool) {
-                    Text("settings.showLowest").tag(PrimaryDisplayTool.automatic)
-                    Text("settings.showClaude").tag(PrimaryDisplayTool.claudeCode)
-                    Text("settings.showCodex").tag(PrimaryDisplayTool.codex)
+                    ForEach(PrimaryDisplayTool.allCases) { tool in
+                        Text(tool.showTitle)
+                            .tag(tool)
+                    }
                 }
                 .pickerStyle(.radioGroup)
 
@@ -180,6 +181,21 @@ struct SettingsView: View {
             .red
         case .unknown, .notInstalled:
             .secondary
+        }
+    }
+}
+
+private extension PrimaryDisplayTool {
+    var showTitle: LocalizedStringKey {
+        switch self {
+        case .sideBySide:
+            "settings.showSideBySide"
+        case .automatic:
+            "settings.showLowest"
+        case .claudeCode:
+            "settings.showClaude"
+        case .codex:
+            "settings.showCodex"
         }
     }
 }

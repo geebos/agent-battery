@@ -40,6 +40,9 @@ displayMode:
 showSection:
   en: "Show"
   zh: "显示"
+showSideBySide:
+  en: "Side by side"
+  zh: "并列"
 showLowest:
   en: "Lowest"
   zh: "最少"

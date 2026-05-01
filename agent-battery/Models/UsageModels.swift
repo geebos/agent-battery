@@ -165,6 +165,7 @@ struct UsageHistoryEntry: Codable, Identifiable, Equatable {
 }
 
 enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
+    case sideBySide
     case automatic
     case claudeCode
     case codex
@@ -173,6 +174,8 @@ enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .sideBySide:
+            String(localized: "primaryTool.sideBySide")
         case .automatic:
             String(localized: "primaryTool.automatic")
         case .claudeCode:
@@ -184,7 +187,7 @@ enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
 
     var usageTool: UsageTool? {
         switch self {
-        case .automatic:
+        case .sideBySide, .automatic:
             nil
         case .claudeCode:
             .claudeCode
