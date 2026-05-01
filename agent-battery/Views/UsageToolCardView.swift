@@ -1,152 +1,100 @@
 import SwiftUI
 
 struct UsageToolCardView: View {
-    let snapshot: UsageSnapshot
+    let tools: [UsageTool]
+    let snapshots: [UsageTool: UsageSnapshot]
+    let histories: [UsageTool: [UsageHistoryEntry]]
     let showWeeklyUsage: Bool
-    let warningThreshold: Int
-    let criticalThreshold: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label {
-                Text(snapshot.tool.displayName)
-            } icon: {
-                Image(snapshot.tool.assetImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 16, height: 16)
-            }
-            .font(.headline)
-
-            UsageMeterView(
+            UsageMetricCardView(
                 title: "usage.fiveHourRemaining",
-                percent: snapshot.fiveHourRemainingPercent,
-                resetAt: snapshot.fiveHourResetAt,
-                level: level(for: snapshot.fiveHourRemainingPercent)
+                series: series(
+                    percent: { $0.fiveHourRemainingPercent },
+                    resetAt: { $0.fiveHourResetAt }
+                )
             )
 
             if showWeeklyUsage {
-                UsageMeterView(
+                UsageMetricCardView(
                     title: "usage.weeklyRemaining",
-                    percent: snapshot.weeklyRemainingPercent,
-                    resetAt: snapshot.weeklyResetAt,
-                    level: level(for: snapshot.weeklyRemainingPercent)
+                    series: series(
+                        percent: { $0.weeklyRemainingPercent },
+                        resetAt: { $0.weeklyResetAt }
+                    )
                 )
             }
 
-            if let message = snapshot.message {
-                Text(message)
+            ForEach(statusMessages, id: \.self) { message in
+                Text(verbatim: message)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
         }
-        .padding(12)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
     }
 
-    private func level(for percent: Double?) -> UsageLevel {
-        UsageMath.level(
-            for: percent,
-            warningThreshold: warningThreshold,
-            criticalThreshold: criticalThreshold
-        )
+    private var statusMessages: [String] {
+        tools.compactMap { tool in
+            guard let message = snapshots[tool]?.message, !message.isEmpty else {
+                return nil
+            }
+
+            return "\(tool.shortName): \(message)"
+        }
+    }
+
+    private func series(
+        percent: (UsageHistoryEntry) -> Double?,
+        resetAt: (UsageHistoryEntry) -> Date?
+    ) -> [UsageHistoryChartSeries] {
+        tools.compactMap { tool in
+            let entries = (histories[tool] ?? []).sorted { $0.recordedAt < $1.recordedAt }
+            let points = entries.compactMap { entry -> UsageHistoryPoint? in
+                guard let value = percent(entry) else {
+                    return nil
+                }
+
+                return UsageHistoryPoint(
+                    date: entry.recordedAt,
+                    percent: UsageMath.clampPercent(value)
+                )
+            }
+
+            guard !points.isEmpty else {
+                return nil
+            }
+
+            let latestEntry = entries.last { percent($0) != nil }
+            return UsageHistoryChartSeries(
+                id: tool,
+                title: tool.displayName,
+                color: color(for: tool),
+                points: points,
+                resetAt: latestEntry.flatMap(resetAt)
+            )
+        }
+    }
+
+    private func color(for tool: UsageTool) -> Color {
+        switch tool {
+        case .claudeCode:
+            Color(red: 0.85, green: 0.45, blue: 0.24)
+        case .codex:
+            .accentColor
+        }
     }
 }
 
-private struct UsageMeterView: View {
+private struct UsageMetricCardView: View {
     let title: LocalizedStringKey
-    let percent: Double?
-    let resetAt: Date?
-    let level: UsageLevel
+    let series: [UsageHistoryChartSeries]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                Text(UsageFormatters.percentText(percent))
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(.semibold)
-            }
-
-            ProgressView(value: progress)
-                .progressViewStyle(.linear)
-                .tint(tint)
-                .accentColor(tint)
-
-            ResetScheduleText(resetAt: resetAt)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var progress: Double {
-        guard let percent else {
-            return 0
-        }
-        return UsageMath.clampPercent(percent) / 100
-    }
-
-    private var tint: Color {
-        switch level {
-        case .normal:
-            .green
-        case .warning:
-            .orange
-        case .critical:
-            .red
-        case .unavailable:
-            .secondary
-        }
-    }
-}
-
-private struct ResetScheduleText: View {
-    let resetAt: Date?
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            content(now: context.date)
-        }
-    }
-
-    @ViewBuilder
-    private func content(now: Date) -> some View {
-        if let resetAt {
-            let seconds = resetAt.timeIntervalSince(now)
-            if seconds <= 0 {
-                Text("formatter.resetPassed")
-            } else if seconds <= 2 * 24 * 60 * 60 {
-                relativeResetText(resetAt, showsDetail: false)
-            } else {
-                relativeResetText(resetAt, showsDetail: true)
-            }
-        } else {
-            Text("formatter.resetUnavailable")
-        }
-    }
-
-    @ViewBuilder
-    private func relativeResetText(_ resetAt: Date, showsDetail: Bool) -> some View {
-        HStack(spacing: 0) {
-            if !UsageFormatters.resetRelativePrefixText.isEmpty {
-                Text(verbatim: UsageFormatters.resetRelativePrefixText)
-            }
-
-            Text(resetAt, style: .relative)
-
-            if !UsageFormatters.resetRelativeSuffixText.isEmpty {
-                Text(verbatim: UsageFormatters.resetRelativeSuffixText)
-            }
-
-            if showsDetail {
-                Text(verbatim: " (\(UsageFormatters.resetDetailText(resetAt)))")
-            }
-        }
+        UsageHistoryChartView(title: title, series: series)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
     }
 }

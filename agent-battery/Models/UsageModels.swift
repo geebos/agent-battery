@@ -122,6 +122,48 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     }
 }
 
+struct UsageHistoryEntry: Codable, Identifiable, Equatable {
+    var id: String { "\(tool.rawValue)-\(recordedAt.timeIntervalSince1970)" }
+
+    let tool: UsageTool
+    let recordedAt: Date
+    let fiveHourRemainingPercent: Double?
+    let weeklyRemainingPercent: Double?
+    let fiveHourResetAt: Date?
+    let weeklyResetAt: Date?
+    let status: UsageStatus
+
+    init(
+        tool: UsageTool,
+        recordedAt: Date,
+        fiveHourRemainingPercent: Double?,
+        weeklyRemainingPercent: Double?,
+        fiveHourResetAt: Date?,
+        weeklyResetAt: Date?,
+        status: UsageStatus
+    ) {
+        self.tool = tool
+        self.recordedAt = recordedAt
+        self.fiveHourRemainingPercent = fiveHourRemainingPercent
+        self.weeklyRemainingPercent = weeklyRemainingPercent
+        self.fiveHourResetAt = fiveHourResetAt
+        self.weeklyResetAt = weeklyResetAt
+        self.status = status
+    }
+
+    init(snapshot: UsageSnapshot, recordedAt: Date) {
+        self.init(
+            tool: snapshot.tool,
+            recordedAt: recordedAt,
+            fiveHourRemainingPercent: snapshot.fiveHourRemainingPercent,
+            weeklyRemainingPercent: snapshot.weeklyRemainingPercent,
+            fiveHourResetAt: snapshot.fiveHourResetAt,
+            weeklyResetAt: snapshot.weeklyResetAt,
+            status: snapshot.status
+        )
+    }
+}
+
 enum PrimaryDisplayTool: String, CaseIterable, Identifiable {
     case automatic
     case claudeCode

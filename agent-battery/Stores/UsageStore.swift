@@ -3,12 +3,14 @@ import Foundation
 
 final class UsageStore: ObservableObject {
     @Published private(set) var snapshots: [UsageTool: UsageSnapshot]
+    @Published private(set) var histories: [UsageTool: [UsageHistoryEntry]]
     @Published private(set) var lastRefreshAt: Date?
 
     private let settings: AppSettings
     private let claudeProvider = ClaudeCodeUsageProvider()
     private let codexProvider = CodexUsageProvider()
     private let snapshotCache: UsageSnapshotCache
+    private let historyStore: UsageHistoryStore
     private let refreshQueue = DispatchQueue(label: "agent-battery.usage-store.refresh", qos: .userInitiated)
     private var refreshTimer: Timer?
     private var didPerformLaunchRefresh = false
@@ -16,11 +18,14 @@ final class UsageStore: ObservableObject {
 
     init(
         settings: AppSettings,
-        snapshotCache: UsageSnapshotCache = UsageSnapshotCache()
+        snapshotCache: UsageSnapshotCache = UsageSnapshotCache(),
+        historyStore: UsageHistoryStore = UsageHistoryStore()
     ) {
         self.settings = settings
         self.snapshotCache = snapshotCache
+        self.historyStore = historyStore
         snapshots = Self.initialSnapshots(from: snapshotCache)
+        histories = Self.initialHistories(from: historyStore)
 
         settings.objectWillChange
             .debounce(for: .milliseconds(250), scheduler: RunLoop.main)
@@ -61,6 +66,10 @@ final class UsageStore: ObservableObject {
         snapshots[tool] ?? UsageSnapshot.unavailable(tool: tool, message: String(localized: "store.waitingFirstRefresh"))
     }
 
+    func history(for tool: UsageTool) -> [UsageHistoryEntry] {
+        histories[tool] ?? []
+    }
+
     func level(for snapshot: UsageSnapshot) -> UsageLevel {
         UsageMath.level(
             for: snapshot.fiveHourRemainingPercent,
@@ -81,8 +90,14 @@ final class UsageStore: ObservableObject {
 
             DispatchQueue.main.async {
                 var nextSnapshots = self.snapshots
-                nextSnapshots[.claudeCode] = self.resolvedSnapshot(claudeRaw, now: now)
-                nextSnapshots[.codex] = self.resolvedSnapshot(codexRaw, now: now)
+                var nextHistories = self.histories
+                let claudeSnapshot = self.resolvedSnapshot(claudeRaw, now: now)
+                let codexSnapshot = self.resolvedSnapshot(codexRaw, now: now)
+                nextSnapshots[.claudeCode] = claudeSnapshot
+                nextSnapshots[.codex] = codexSnapshot
+                nextHistories[.claudeCode] = self.historyStore.record(claudeSnapshot, at: now)
+                nextHistories[.codex] = self.historyStore.record(codexSnapshot, at: now)
+                self.histories = nextHistories
                 self.snapshots = nextSnapshots
                 self.lastRefreshAt = now
             }
@@ -127,7 +142,11 @@ final class UsageStore: ObservableObject {
 
             DispatchQueue.main.async {
                 var nextSnapshots = self.snapshots
-                nextSnapshots[.codex] = self.resolvedSnapshot(codexRaw, now: now)
+                var nextHistories = self.histories
+                let codexSnapshot = self.resolvedSnapshot(codexRaw, now: now)
+                nextSnapshots[.codex] = codexSnapshot
+                nextHistories[.codex] = self.historyStore.record(codexSnapshot, at: now)
+                self.histories = nextHistories
                 self.snapshots = nextSnapshots
                 self.lastRefreshAt = now
             }
@@ -203,6 +222,14 @@ final class UsageStore: ObservableObject {
                     .replacingStatus(.stale, message: String(localized: "store.usingCachedData"))
                     ?? UsageSnapshot.unavailable(tool: tool, message: String(localized: "store.waitingFirstRefresh"))
                 return (tool, snapshot)
+            }
+        )
+    }
+
+    private static func initialHistories(from historyStore: UsageHistoryStore) -> [UsageTool: [UsageHistoryEntry]] {
+        Dictionary(
+            uniqueKeysWithValues: UsageTool.allCases.map { tool in
+                (tool, historyStore.history(for: tool))
             }
         )
     }

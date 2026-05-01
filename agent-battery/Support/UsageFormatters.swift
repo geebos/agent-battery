@@ -37,8 +37,45 @@ enum UsageFormatters {
         resetDetailFormatter.string(from: date)
     }
 
+    static func resetCountdownText(
+        until date: Date,
+        now: Date = Date(),
+        locale: Locale = .current
+    ) -> String {
+        let remainingSeconds = max(60, Int64(date.timeIntervalSince(now)))
+        let days = remainingSeconds / (24 * 60 * 60)
+        let hours = (remainingSeconds % (24 * 60 * 60)) / (60 * 60)
+        let minutes = (remainingSeconds % (60 * 60)) / 60
+        let units = [
+            durationUnit(value: days, english: "d", chinese: "天", locale: locale),
+            durationUnit(value: hours, english: "h", chinese: "小时", locale: locale),
+            durationUnit(value: minutes, english: "m", chinese: "分钟", locale: locale),
+        ]
+            .compactMap { $0 }
+            .prefix(2)
+
+        return units.joined(separator: " ")
+    }
+
     private static var isChineseLocale: Bool {
         Locale.current.identifier.hasPrefix("zh")
+    }
+
+    private static func durationUnit(
+        value: Int64,
+        english: String,
+        chinese: String,
+        locale: Locale
+    ) -> String? {
+        guard value > 0 else {
+            return nil
+        }
+
+        if locale.identifier.hasPrefix("zh") {
+            return "\(value) \(chinese)"
+        }
+
+        return "\(value)\(english)"
     }
 
     private static func localizedSegment(_ key: String, fallback: String) -> String {

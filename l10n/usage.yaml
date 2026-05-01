@@ -4,3 +4,15 @@ fiveHourRemaining:
 weeklyRemaining:
   en: "Weekly Remaining"
   zh: "每周剩余"
+historyTitle:
+  en: "Trend"
+  zh: "趋势"
+historyNoData:
+  en: "Waiting for history"
+  zh: "等待历史记录"
+historyFiveHour:
+  en: "5h"
+  zh: "5小时"
+historyWeekly:
+  en: "Week"
+  zh: "每周"

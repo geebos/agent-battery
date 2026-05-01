@@ -17,14 +17,12 @@ struct MenuBarPanelView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 20)
             } else {
-                ForEach(store.enabledTools) { tool in
-                    UsageToolCardView(
-                        snapshot: store.snapshot(for: tool),
-                        showWeeklyUsage: settings.showWeeklyUsage,
-                        warningThreshold: settings.warningThreshold,
-                        criticalThreshold: settings.criticalThreshold
-                    )
-                }
+                UsageToolCardView(
+                    tools: store.enabledTools,
+                    snapshots: snapshotsForEnabledTools,
+                    histories: historiesForEnabledTools,
+                    showWeeklyUsage: settings.showWeeklyUsage
+                )
             }
 
             Divider()
@@ -62,6 +60,22 @@ struct MenuBarPanelView: View {
 
             StatusPill(level: store.level(for: store.primarySnapshot))
         }
+    }
+
+    private var snapshotsForEnabledTools: [UsageTool: UsageSnapshot] {
+        Dictionary(
+            uniqueKeysWithValues: store.enabledTools.map { tool in
+                (tool, store.snapshot(for: tool))
+            }
+        )
+    }
+
+    private var historiesForEnabledTools: [UsageTool: [UsageHistoryEntry]] {
+        Dictionary(
+            uniqueKeysWithValues: store.enabledTools.map { tool in
+                (tool, store.history(for: tool))
+            }
+        )
     }
 }
 
