@@ -3,15 +3,16 @@ set -euo pipefail
 
 # 与 .github/workflows/release.yml 一致的未签名 universal Release 构建。
 # 用法：
-#   script/release_build.sh build           # 仅编译
-#   script/release_build.sh dmg             # 编译 + 打 DMG（需 brew install create-dmg）
-#   script/release_build.sh open            # 编译 + 打开 .app（本地验证 Release 行为）
+#   script/release_build.sh build              # 仅编译
+#   script/release_build.sh dmg                # 编译 + 打 DMG（需 brew install create-dmg）
+#   script/release_build.sh open [lang]        # 编译 + 打开 .app；可指定语言（如 zh-Hans / en）
 #
 # 可通过环境变量覆盖：
 #   MARKETING_VERSION (默认 0.0.0-local)
 #   BUILD_NUMBER      (默认当前时间戳)
 #   CONFIGURATION     (默认 Release)
 #   BUILD_DIR         (默认 build/release)
+#   APP_LANGUAGE      (open 时使用的 AppleLanguages 值，等价于第二个位置参数)
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
@@ -26,6 +27,7 @@ MARKETING_VERSION="${MARKETING_VERSION:-0.0.0-local}"
 BUILD_NUMBER="${BUILD_NUMBER:-$(date +%s)}"
 
 CMD="${1:-build}"
+APP_LANGUAGE="${2:-${APP_LANGUAGE:-}}"
 
 print_toolchain() {
   echo "==> Toolchain"
@@ -108,7 +110,12 @@ run_open() {
   run_build
   APP_PATH="$BUILD_DIR/DerivedData/Build/Products/$CONFIGURATION/$APP_NAME.app"
   pkill -x "$APP_NAME" >/dev/null 2>&1 || true
-  /usr/bin/open -n "$APP_PATH"
+  if [[ -n "$APP_LANGUAGE" ]]; then
+    echo "==> Launch with AppleLanguages=($APP_LANGUAGE)"
+    /usr/bin/open -n "$APP_PATH" --args -AppleLanguages "($APP_LANGUAGE)"
+  else
+    /usr/bin/open -n "$APP_PATH"
+  fi
 }
 
 case "$CMD" in
@@ -116,7 +123,7 @@ case "$CMD" in
   dmg)   run_dmg ;;
   open)  run_open ;;
   *)
-    echo "usage: $0 [build|dmg|open]" >&2
+    echo "usage: $0 [build|dmg|open [lang]]" >&2
     exit 2
     ;;
 esac
