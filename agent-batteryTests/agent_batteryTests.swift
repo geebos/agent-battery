@@ -17,6 +17,32 @@ struct AgentBatteryTests {
         #expect(UsageFormatters.percentText(-10) == "0%")
     }
 
+    @Test func resetCountdownTextUsesLargestTwoDurationUnits() {
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        #expect(
+            UsageFormatters.resetCountdownText(
+                until: now.addingTimeInterval((3 * 24 * 60 * 60) + (12 * 60 * 60) + (55 * 60)),
+                now: now,
+                locale: Locale(identifier: "zh_Hans")
+            ) == "3 天 12 小时"
+        )
+        #expect(
+            UsageFormatters.resetCountdownText(
+                until: now.addingTimeInterval((2 * 60 * 60) + (5 * 60)),
+                now: now,
+                locale: Locale(identifier: "en_US")
+            ) == "2h 5m"
+        )
+        #expect(
+            UsageFormatters.resetCountdownText(
+                until: now.addingTimeInterval(30),
+                now: now,
+                locale: Locale(identifier: "zh_Hans")
+            ) == "1 分钟"
+        )
+    }
+
     @Test func warningLevelsFollowConfiguredThresholds() {
         #expect(UsageMath.level(for: 62, warningThreshold: 40, criticalThreshold: 15) == .normal)
         #expect(UsageMath.level(for: 18, warningThreshold: 40, criticalThreshold: 15) == .warning)
@@ -102,6 +128,30 @@ struct AgentBatteryTests {
         #expect(afterWeeklyReset.fiveHourRemainingPercent == 100)
         #expect(afterWeeklyReset.weeklyRemainingPercent == 100)
         #expect(afterWeeklyReset.weeklyResetAt == snapshot.weeklyResetAt?.addingTimeInterval(2 * 7 * 24 * 60 * 60))
+    }
+
+    @Test func usageHistoryStoreRecordsAndPrunesEntries() throws {
+        let suiteName = "agent-battery-tests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = UsageHistoryStore(
+            defaults: defaults,
+            maxEntriesPerTool: 2,
+            retention: 60
+        )
+        let start = Date(timeIntervalSince1970: 1_000)
+
+        _ = store.record(historySnapshot(percent: 70), at: start)
+        _ = store.record(historySnapshot(percent: 60), at: start.addingTimeInterval(30))
+        _ = store.record(historySnapshot(percent: 50), at: start.addingTimeInterval(90))
+
+        let history = store.history(for: .codex, now: start.addingTimeInterval(90))
+
+        #expect(history.map(\.fiveHourRemainingPercent) == [60, 50])
+        #expect(history.map(\.status) == [.available, .available])
     }
 
     @Test func codexProviderUsesLatestRateLimitEventAcrossRollouts() throws {
@@ -235,14 +285,20 @@ struct AgentBatteryTests {
         settings.claudeEnabled = false
         settings.codexEnabled = true
         settings.codexSessionsPath = directory.path
-        let store = UsageStore(settings: settings, snapshotCache: UsageSnapshotCache(defaults: defaults))
+        let store = UsageStore(
+            settings: settings,
+            snapshotCache: UsageSnapshotCache(defaults: defaults),
+            historyStore: UsageHistoryStore(defaults: defaults)
+        )
         let snapshot = await refreshedSnapshot(from: store, for: .codex) {
             $0.fiveHourRemainingPercent == 79
         }
+        let history = store.history(for: .codex)
 
         #expect(snapshot.status == .available)
         #expect(snapshot.fiveHourRemainingPercent == 79)
         #expect(snapshot.weeklyRemainingPercent == 66)
+        #expect(history.contains { $0.fiveHourRemainingPercent == 79 && $0.weeklyRemainingPercent == 66 })
     }
 
     @Test func claudeSetupInstallsWrapperAndPreservesExistingStatusLine() throws {
@@ -370,6 +426,19 @@ struct AgentBatteryTests {
         }
 
         return snapshot
+    }
+
+    private func historySnapshot(percent: Double) -> UsageSnapshot {
+        UsageSnapshot(
+            tool: .codex,
+            fiveHourRemainingPercent: percent,
+            weeklyRemainingPercent: percent + 10,
+            fiveHourResetAt: nil,
+            weeklyResetAt: nil,
+            updatedAt: nil,
+            status: .available,
+            message: nil
+        )
     }
 
     private func jsonObject(from url: URL) throws -> [String: Any] {
