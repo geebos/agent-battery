@@ -30,6 +30,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.4.app/Contents/Developer
@@ -72,6 +75,32 @@ jobs:
           echo "MARKETING_VERSION=$MARKETING_VERSION" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
 
+      - name: Extract tag annotation as release notes
+        run: |
+          set -euo pipefail
+
+          git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG" --force --no-tags || true
+
+          TAG_TYPE="$(git cat-file -t "$RELEASE_TAG" 2>/dev/null || echo '')"
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+
+          if [[ "$TAG_TYPE" == "tag" ]]; then
+            git for-each-ref "refs/tags/$RELEASE_TAG" \
+              --format='%(contents:body)' > "$NOTES_FILE"
+            if [[ ! -s "$NOTES_FILE" ]]; then
+              git for-each-ref "refs/tags/$RELEASE_TAG" \
+                --format='%(contents)' > "$NOTES_FILE"
+            fi
+          else
+            : > "$NOTES_FILE"
+          fi
+
+          if [[ ! -s "$NOTES_FILE" ]]; then
+            echo "Unsigned universal macOS build for Apple silicon and Intel Macs." > "$NOTES_FILE"
+          fi
+
+          echo "RELEASE_NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
+
       - name: Build & package DMG
         run: |
           set -euo pipefail
@@ -98,10 +127,13 @@ jobs:
           set -euo pipefail
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --title "$RELEASE_TAG" \
+              --notes-file "$RELEASE_NOTES_FILE"
             gh release upload "$RELEASE_TAG" "$DMG_PATH" "$SHA256_PATH" --clobber
           else
             gh release create "$RELEASE_TAG" "$DMG_PATH" "$SHA256_PATH" \
               --target "$GITHUB_SHA" \
               --title "$RELEASE_TAG" \
-              --notes "Unsigned universal macOS build for Apple silicon and Intel Macs."
+              --notes-file "$RELEASE_NOTES_FILE"
           fi
