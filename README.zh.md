@@ -16,16 +16,18 @@
 
 一个 macOS 状态栏小工具，用「电量百分比」的形式展示 **Claude Code** 与 **Codex** 的 usage 剩余额度，让你随时知道 5 小时窗口和每周额度还剩多少。
 
-<p align="center">
-  <figure style="display:inline-block; width:48%; margin:0 1% 0 0; text-align:center;">
-    <img src="assets/setting-zh.png" alt="设置预览" width="100%" />
-    <figcaption>普通模式</figcaption>
-  </figure>
-  <figure style="display:inline-block; width:48%; margin:0; text-align:center;">
-    <img src="assets/sidebyside-zh.png" alt="并排布局预览" width="100%" />
-    <figcaption>并列模式</figcaption>
-  </figure>
-</p>
+<table>
+  <tbody>
+    <tr>
+      <td><img src="assets/setting-zh.png" alt="设置预览" width="100%" /></td>
+      <td><img src="assets/sidebyside-zh.png" alt="并排布局预览" width="100%" /></td>
+    </tr>
+    <tr>
+      <td align="center">普通模式</td>
+      <td align="center">并列模式</td>
+    </tr>
+  </tbody>
+</table>
 
 ## 功能
 

@@ -16,16 +16,18 @@ English | [中文](README.zh.md)
 
 A lightweight macOS menu bar app that displays the remaining usage quota of **Claude Code** and **Codex** as a battery-style percentage, so you can always know how much is left in your 5-hour and weekly windows.
 
-<p align="center">
-  <figure style="display:inline-block; width:48%; margin:0 1% 0 0; text-align:center;">
-    <img src="assets/setting-en.png" alt="Settings preview" width="100%" />
-    <figcaption>Normal mode</figcaption>
-  </figure>
-  <figure style="display:inline-block; width:48%; margin:0; text-align:center;">
-    <img src="assets/sidebyside-en.png" alt="Side-by-side preview" width="100%" />
-    <figcaption>Side-by-side mode</figcaption>
-  </figure>
-</p>
+<table>
+  <tbody>
+    <tr>
+      <td><img src="assets/setting-en.png" alt="Settings preview" width="100%" /></td>
+      <td><img src="assets/sidebyside-en.png" alt="Side-by-side preview" width="100%" /></td>
+    </tr>
+    <tr>
+      <td align="center">Normal mode</td>
+      <td align="center">Side-by-side mode</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Features
 
