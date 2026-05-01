@@ -6,6 +6,7 @@ struct UsageHistoryChartSeries: Identifiable {
     let color: Color
     let points: [UsageHistoryPoint]
     let resetAt: Date?
+    let windowStart: Date?
 
     var resetPoint: UsageHistoryPoint? {
         guard let latest = points.last,
@@ -94,7 +95,9 @@ struct UsageHistoryChartView: View {
             }
             return dates
         }
-        guard let lower = dates.min(), var upper = dates.max() else {
+        let windowStarts = series.compactMap { $0.windowStart }
+        let lowerCandidate = windowStarts.min() ?? dates.min()
+        guard let lower = lowerCandidate, var upper = dates.max() else {
             return nil
         }
 

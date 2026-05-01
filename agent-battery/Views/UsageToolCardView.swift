@@ -12,7 +12,8 @@ struct UsageToolCardView: View {
                 title: "usage.fiveHourRemaining",
                 series: series(
                     percent: { $0.fiveHourRemainingPercent },
-                    resetAt: { $0.fiveHourResetAt }
+                    resetAt: { $0.fiveHourResetAt },
+                    period: 5 * 60 * 60
                 )
             )
 
@@ -21,7 +22,8 @@ struct UsageToolCardView: View {
                     title: "usage.weeklyRemaining",
                     series: series(
                         percent: { $0.weeklyRemainingPercent },
-                        resetAt: { $0.weeklyResetAt }
+                        resetAt: { $0.weeklyResetAt },
+                        period: 7 * 24 * 60 * 60
                     )
                 )
             }
@@ -47,11 +49,45 @@ struct UsageToolCardView: View {
 
     private func series(
         percent: (UsageHistoryEntry) -> Double?,
-        resetAt: (UsageHistoryEntry) -> Date?
+        resetAt: (UsageHistoryEntry) -> Date?,
+        period: TimeInterval
     ) -> [UsageHistoryChartSeries] {
-        tools.compactMap { tool in
-            let entries = (histories[tool] ?? []).sorted { $0.recordedAt < $1.recordedAt }
-            let points = entries.compactMap { entry -> UsageHistoryPoint? in
+        let sortedEntriesByTool: [UsageTool: [UsageHistoryEntry]] = Dictionary(
+            uniqueKeysWithValues: tools.map { tool in
+                (tool, (histories[tool] ?? []).sorted { $0.recordedAt < $1.recordedAt })
+            }
+        )
+
+        let nextResetByTool: [UsageTool: Date] = sortedEntriesByTool.compactMapValues { entries in
+            entries.last { percent($0) != nil }.flatMap(resetAt)
+        }
+
+        let earliestPreviousReset = nextResetByTool.values
+            .map { $0.addingTimeInterval(-period) }
+            .min()
+        let hasDataAtPreviousReset = earliestPreviousReset.map { previousReset in
+            sortedEntriesByTool.values.contains { entries in
+                entries.contains { entry in
+                    percent(entry) != nil && entry.recordedAt <= previousReset
+                }
+            }
+        } ?? false
+        let windowStart: Date? = hasDataAtPreviousReset
+            ? earliestPreviousReset?.addingTimeInterval(-period * 0.02)
+            : nil
+
+        return tools.compactMap { tool in
+            let entries = sortedEntriesByTool[tool] ?? []
+            let nextResetAt = nextResetByTool[tool]
+
+            let scopedEntries: [UsageHistoryEntry]
+            if let windowStart {
+                scopedEntries = entries.filter { $0.recordedAt >= windowStart }
+            } else {
+                scopedEntries = entries
+            }
+
+            let points = scopedEntries.compactMap { entry -> UsageHistoryPoint? in
                 guard let value = percent(entry) else {
                     return nil
                 }
@@ -66,13 +102,13 @@ struct UsageToolCardView: View {
                 return nil
             }
 
-            let latestEntry = entries.last { percent($0) != nil }
             return UsageHistoryChartSeries(
                 id: tool,
                 title: tool.displayName,
                 color: color(for: tool),
                 points: points,
-                resetAt: latestEntry.flatMap(resetAt)
+                resetAt: nextResetAt,
+                windowStart: windowStart
             )
         }
     }
