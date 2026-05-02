@@ -49,6 +49,7 @@ struct MenuBarPanelView: View {
             .buttonStyle(.borderless)
         }
         .padding(14)
+        .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
     }
 
     private var header: some View {

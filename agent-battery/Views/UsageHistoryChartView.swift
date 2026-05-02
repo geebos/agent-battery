@@ -62,7 +62,7 @@ struct UsageHistoryChartView: View {
                     }
                 }
                 .frame(height: chartHeight)
-                .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                .background(Color.clear, in: RoundedRectangle(cornerRadius: 6))
 
                 if let dateRange, hasChartData {
                     UsageHistoryTimeAxisView(
@@ -233,7 +233,7 @@ private struct UsageHistoryPlotView: View {
                             .foregroundStyle(item.color)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 1)
-                            .background(.thinMaterial, in: Capsule())
+                            .background(Color.secondary.opacity(0.15), in: Capsule())
                             .position(labelPosition(
                                 for: latest,
                                 in: geometry.size,
@@ -462,7 +462,7 @@ private struct ResetCountdownLabel: View {
                 .foregroundStyle(color)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
-                .background(.thinMaterial, in: Capsule())
+                .background(Color.secondary.opacity(0.15), in: Capsule())
         }
     }
 }
