@@ -62,15 +62,13 @@ struct AgentBatteryTests {
         #expect(settings.dataConfiguration.claudeUsagePath == UsageDefaults.claudeUsagePath)
     }
 
-    @Test func menuBarDisplayModeIdentifiesToolIconModes() {
-        #expect(MenuBarDisplayMode.iconOnly.usesToolIcons)
-        #expect(MenuBarDisplayMode.iconAndPercent.usesToolIcons)
-        #expect(!MenuBarDisplayMode.percentOnly.usesToolIcons)
-        #expect(!MenuBarDisplayMode.batteryAndPercent.usesToolIcons)
-        #expect(!MenuBarDisplayMode.toolAndPercent.usesToolIcons)
+    @Test func menuBarDisplayModeControlsPercentToggle() {
+        #expect(!MenuBarDisplayMode.percent.supportsPercentToggle)
+        #expect(MenuBarDisplayMode.battery.supportsPercentToggle)
+        #expect(MenuBarDisplayMode.tool.supportsPercentToggle)
     }
 
-    @Test func appSettingsPersistsMenuBarIconPreferences() throws {
+    @Test func appSettingsPersistsEnabledToolPreferences() throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer {
@@ -80,17 +78,17 @@ struct AgentBatteryTests {
         do {
             let settings = AppSettings(defaults: defaults)
 
-            #expect(settings.showsMenuBarIcon(for: .claudeCode))
-            #expect(settings.showsMenuBarIcon(for: .codex))
+            #expect(settings.isEnabled(.claudeCode))
+            #expect(settings.isEnabled(.codex))
 
-            settings.showClaudeMenuBarIcon = false
-            settings.showCodexMenuBarIcon = false
+            settings.claudeEnabled = false
+            settings.codexEnabled = false
         }
 
         let settings = AppSettings(defaults: defaults)
 
-        #expect(!settings.showsMenuBarIcon(for: .claudeCode))
-        #expect(!settings.showsMenuBarIcon(for: .codex))
+        #expect(!settings.isEnabled(.claudeCode))
+        #expect(!settings.isEnabled(.codex))
     }
 
     @Test func cachedSnapshotsProjectElapsedResetWindows() throws {
