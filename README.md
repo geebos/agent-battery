@@ -19,10 +19,12 @@ A lightweight macOS menu bar app that displays the remaining usage quota of **Cl
 <table>
   <tbody>
     <tr>
+      <td><img src="assets/menu-en.png" alt="Menu preview" width="100%" /></td>
       <td><img src="assets/setting-en.png" alt="Settings preview" width="100%" /></td>
       <td><img src="assets/sidebyside-en.png" alt="Side-by-side preview" width="100%" /></td>
     </tr>
     <tr>
+      <td align="center">Menu bar</td>
       <td align="center">Normal mode</td>
       <td align="center">Side-by-side mode</td>
     </tr>

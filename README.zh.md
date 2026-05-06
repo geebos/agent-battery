@@ -19,10 +19,12 @@
 <table>
   <tbody>
     <tr>
+      <td><img src="assets/menu-zh.png" alt="菜单栏预览" width="100%" /></td>
       <td><img src="assets/setting-zh.png" alt="设置预览" width="100%" /></td>
       <td><img src="assets/sidebyside-zh.png" alt="并排布局预览" width="100%" /></td>
     </tr>
     <tr>
+      <td align="center">菜单栏</td>
       <td align="center">普通模式</td>
       <td align="center">并列模式</td>
     </tr>
