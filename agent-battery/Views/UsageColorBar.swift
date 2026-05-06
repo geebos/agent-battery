@@ -72,11 +72,10 @@ struct UsageColorBar: View {
     private func thumbView(_ kind: ThumbKind, in width: CGFloat) -> some View {
         let value = currentValue(for: kind)
         let centerX = width * CGFloat(value) / 100
-        let cursor: PointerStyle = (draggingKind == kind) ? .grabActive : .default
 
         Thumb(color: color(for: kind))
             .frame(width: thumbWidth, height: thumbTotalHeight)
-            .pointerStyle(cursor)
+            .usageColorBarPointerStyle(isActive: draggingKind == kind)
             .position(x: centerX, y: thumbTotalHeight / 2)
             .gesture(kind.isFixed ? nil : dragGesture(for: kind, width: width))
             .onTapGesture {
@@ -140,6 +139,18 @@ struct UsageColorBar: View {
         case .low: settings.usageColorLow
         case .mid: settings.usageColorMid
         case .high: settings.usageColorHigh
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func usageColorBarPointerStyle(isActive: Bool) -> some View {
+        if #available(macOS 15.0, *) {
+            let cursor: PointerStyle = isActive ? .grabActive : .default
+            self.pointerStyle(cursor)
+        } else {
+            self
         }
     }
 }
