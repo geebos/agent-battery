@@ -48,7 +48,7 @@
 
 ### 方式二：源码构建
 
-需要 macOS 15+ 与 Xcode 26。
+Agent Battery 运行需要 macOS 14.0 或更高版本。源码构建建议使用当前版本的 Xcode。
 
 ```bash
 git clone https://github.com/<your-name>/agent-battery.git

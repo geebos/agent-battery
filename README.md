@@ -48,7 +48,7 @@ Download the latest `.dmg` from [Releases](../../releases) and drag it into `App
 
 ### Option 2: Build from source
 
-Requires macOS 15+ and Xcode 26.
+Agent Battery runs on macOS 14.0 or later. For source builds, use the current Xcode release.
 
 ```bash
 git clone https://github.com/<your-name>/agent-battery.git
