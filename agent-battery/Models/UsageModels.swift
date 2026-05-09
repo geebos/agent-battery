@@ -122,6 +122,19 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     }
 }
 
+extension UsageSnapshot {
+    private static let weeklyMenuBarDisplayThreshold = 10.0
+
+    var menuBarRemainingPercent: Double? {
+        if let weeklyRemainingPercent,
+           weeklyRemainingPercent < Self.weeklyMenuBarDisplayThreshold {
+            return weeklyRemainingPercent
+        }
+
+        return fiveHourRemainingPercent
+    }
+}
+
 struct UsageHistoryEntry: Codable, Identifiable, Equatable {
     var id: String { "\(tool.rawValue)-\(recordedAt.timeIntervalSince1970)" }
 

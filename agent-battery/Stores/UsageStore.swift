@@ -54,9 +54,9 @@ final class UsageStore: ObservableObject {
 
         let enabledSnapshots = enabledTools.map { snapshot(for: $0) }
         return enabledSnapshots
-            .filter { $0.fiveHourRemainingPercent != nil }
+            .filter { $0.menuBarRemainingPercent != nil }
             .min {
-                ($0.fiveHourRemainingPercent ?? 100) < ($1.fiveHourRemainingPercent ?? 100)
+                ($0.menuBarRemainingPercent ?? 100) < ($1.menuBarRemainingPercent ?? 100)
             }
             ?? enabledSnapshots.first
             ?? UsageSnapshot.unavailable(tool: .claudeCode, message: String(localized: "store.noEnabledTools"))

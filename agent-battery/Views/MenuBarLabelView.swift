@@ -15,7 +15,7 @@ struct MenuBarLabelView: View {
 
     @ViewBuilder
     private func label(for snapshot: UsageSnapshot) -> some View {
-        let percent = UsageFormatters.percentText(snapshot.fiveHourRemainingPercent)
+        let percent = UsageFormatters.percentText(snapshot.menuBarRemainingPercent)
         let showsPercent = settings.showMenuBarPercent
         let color = labelColor(for: snapshot)
 
@@ -63,7 +63,7 @@ struct MenuBarLabelView: View {
 
     private func batteryIcon(snapshot: UsageSnapshot, height: CGFloat = 12) -> some View {
         BatteryIcon(
-            percent: snapshot.fiveHourRemainingPercent,
+            percent: snapshot.menuBarRemainingPercent,
             height: height,
             autoColor: settings.colorByUsage,
             fillColor: .white,
@@ -150,7 +150,7 @@ private struct MenuBarText: View {
 
 extension MenuBarLabelView {
     fileprivate func labelColor(for snapshot: UsageSnapshot) -> Color {
-        guard let percent = snapshot.fiveHourRemainingPercent else {
+        guard let percent = snapshot.menuBarRemainingPercent else {
             return .secondary
         }
 
@@ -178,7 +178,7 @@ extension MenuBarLabelView {
         textRowsImage(
             snapshots.map { snapshot in
                 MenuBarTextImageRow(
-                    text: UsageFormatters.percentText(snapshot.fiveHourRemainingPercent),
+                    text: UsageFormatters.percentText(snapshot.menuBarRemainingPercent),
                     color: labelColor(for: snapshot)
                 )
             }
@@ -213,7 +213,7 @@ extension MenuBarLabelView {
         }
         let textRows = snapshots.map { snapshot in
             attributedString(
-                UsageFormatters.percentText(snapshot.fiveHourRemainingPercent),
+                UsageFormatters.percentText(snapshot.menuBarRemainingPercent),
                 color: labelColor(for: snapshot)
             )
         }
@@ -251,7 +251,7 @@ extension MenuBarLabelView {
         let rows = snapshots.map { snapshot in
             MenuBarToolImageRow(
                 name: snapshot.tool.shortName,
-                percent: settings.showMenuBarPercent ? UsageFormatters.percentText(snapshot.fiveHourRemainingPercent) : nil,
+                percent: settings.showMenuBarPercent ? UsageFormatters.percentText(snapshot.menuBarRemainingPercent) : nil,
                 color: labelColor(for: snapshot)
             )
         }

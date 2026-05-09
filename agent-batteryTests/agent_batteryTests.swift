@@ -50,6 +50,12 @@ struct AgentBatteryTests {
         #expect(UsageMath.level(for: nil, warningThreshold: 40, criticalThreshold: 15) == .unavailable)
     }
 
+    @Test func menuBarRemainingPercentSwitchesToWeeklyBelowTenPercent() {
+        #expect(usageSnapshot(fiveHour: 72, weekly: 9).menuBarRemainingPercent == 9)
+        #expect(usageSnapshot(fiveHour: 72, weekly: 10).menuBarRemainingPercent == 72)
+        #expect(usageSnapshot(fiveHour: 72, weekly: nil).menuBarRemainingPercent == 72)
+    }
+
     @Test func appSettingsUsesClaudeUsageFileUnderDotClaude() throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -431,6 +437,19 @@ struct AgentBatteryTests {
             tool: .codex,
             fiveHourRemainingPercent: percent,
             weeklyRemainingPercent: percent + 10,
+            fiveHourResetAt: nil,
+            weeklyResetAt: nil,
+            updatedAt: nil,
+            status: .available,
+            message: nil
+        )
+    }
+
+    private func usageSnapshot(fiveHour: Double?, weekly: Double?) -> UsageSnapshot {
+        UsageSnapshot(
+            tool: .codex,
+            fiveHourRemainingPercent: fiveHour,
+            weeklyRemainingPercent: weekly,
             fiveHourResetAt: nil,
             weeklyResetAt: nil,
             updatedAt: nil,
