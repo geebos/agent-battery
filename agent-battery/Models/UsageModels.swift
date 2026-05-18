@@ -231,6 +231,22 @@ enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
     var supportsPercentToggle: Bool { self != .percent }
 }
 
+enum MenuBarColorMode: String, CaseIterable, Identifiable {
+    case followSystem = "follow_system"
+    case colorByUsage = "color_by_usage"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .followSystem:
+            String(localized: "settings.colorModeFollowSystem")
+        case .colorByUsage:
+            String(localized: "settings.colorModeByUsage")
+        }
+    }
+}
+
 enum RefreshInterval: Int, CaseIterable, Identifiable {
     case thirtySeconds = 30
     case oneMinute = 60
