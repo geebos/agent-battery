@@ -97,6 +97,41 @@ struct AgentBatteryTests {
         #expect(!settings.isEnabled(.codex))
     }
 
+    @Test func appSettingsMigratesMenuBarColorModePreferences() throws {
+        var defaultsToClean: [(String, UserDefaults)] = []
+        defer {
+            defaultsToClean.forEach { suiteName, defaults in
+                defaults.removePersistentDomain(forName: suiteName)
+            }
+        }
+
+        let defaultDefaults = try temporaryDefaults(trackedBy: &defaultsToClean)
+        let defaultSettings = AppSettings(defaults: defaultDefaults)
+        #expect(defaultSettings.menuBarColorMode == .colorByUsage)
+        #expect(defaultDefaults.string(forKey: "menuBarColorMode") == MenuBarColorMode.colorByUsage.rawValue)
+
+        let legacyOffDefaults = try temporaryDefaults(trackedBy: &defaultsToClean)
+        legacyOffDefaults.set(false, forKey: "colorByUsage")
+        #expect(AppSettings(defaults: legacyOffDefaults).menuBarColorMode == .followSystem)
+        #expect(legacyOffDefaults.string(forKey: "menuBarColorMode") == MenuBarColorMode.followSystem.rawValue)
+
+        let legacyOnDefaults = try temporaryDefaults(trackedBy: &defaultsToClean)
+        legacyOnDefaults.set(true, forKey: "colorByUsage")
+        #expect(AppSettings(defaults: legacyOnDefaults).menuBarColorMode == .colorByUsage)
+
+        let migratedDefaults = try temporaryDefaults(trackedBy: &defaultsToClean)
+        migratedDefaults.set(false, forKey: "colorByUsage")
+        migratedDefaults.set(MenuBarColorMode.colorByUsage.rawValue, forKey: "menuBarColorMode")
+        #expect(AppSettings(defaults: migratedDefaults).menuBarColorMode == .colorByUsage)
+
+        let persistedDefaults = try temporaryDefaults(trackedBy: &defaultsToClean)
+        do {
+            let settings = AppSettings(defaults: persistedDefaults)
+            settings.menuBarColorMode = .followSystem
+        }
+        #expect(AppSettings(defaults: persistedDefaults).menuBarColorMode == .followSystem)
+    }
+
     @Test func cachedSnapshotsProjectElapsedResetWindows() throws {
         let suiteName = "agent-battery-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -461,5 +496,13 @@ struct AgentBatteryTests {
     private func jsonObject(from url: URL) throws -> [String: Any] {
         let data = try Data(contentsOf: url)
         return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
+
+    private func temporaryDefaults(trackedBy defaultsToClean: inout [(String, UserDefaults)]) throws -> UserDefaults {
+        let suiteName = "agent-battery-tests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        defaultsToClean.append((suiteName, defaults))
+        return defaults
     }
 }

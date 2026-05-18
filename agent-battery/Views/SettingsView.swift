@@ -57,9 +57,15 @@ struct SettingsView: View {
                     Toggle("settings.showPercent", isOn: $settings.showMenuBarPercent)
                 }
 
-                Toggle("settings.colorByUsage", isOn: $settings.colorByUsage)
+                Picker("settings.colorMode", selection: $settings.menuBarColorMode) {
+                    ForEach(MenuBarColorMode.allCases) { mode in
+                        Text(mode.title)
+                            .tag(mode)
+                    }
+                }
+                .pickerStyle(.radioGroup)
 
-                if settings.colorByUsage {
+                if settings.colorsByUsage {
                     UsageColorBar(settings: settings)
                 }
 

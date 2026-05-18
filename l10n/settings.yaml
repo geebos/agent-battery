@@ -58,6 +58,15 @@ showPercent:
 colorByUsage:
   en: "Color by usage"
   zh: "按用量着色"
+colorMode:
+  en: "Color"
+  zh: "颜色"
+colorModeFollowSystem:
+  en: "Follow system"
+  zh: "跟随系统"
+colorModeByUsage:
+  en: "Color by usage"
+  zh: "按用量着色"
 showWeekly:
   en: "Show weekly usage"
   zh: "显示每周用量"

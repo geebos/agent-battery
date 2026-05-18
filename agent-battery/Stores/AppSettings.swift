@@ -11,6 +11,7 @@ final class AppSettings: ObservableObject {
         static let primaryDisplayTool = "primaryDisplayTool"
         static let menuBarDisplayMode = "menuBarDisplayMode"
         static let showMenuBarPercent = "showMenuBarPercent"
+        static let menuBarColorMode = "menuBarColorMode"
         static let colorByUsage = "colorByUsage"
         static let refreshInterval = "refreshInterval"
         static let warningThreshold = "warningThreshold"
@@ -58,8 +59,10 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(showMenuBarPercent, forKey: Keys.showMenuBarPercent) }
     }
 
-    @Published var colorByUsage: Bool {
-        didSet { defaults.set(colorByUsage, forKey: Keys.colorByUsage) }
+    @Published var menuBarColorMode: MenuBarColorMode {
+        didSet {
+            persistMenuBarColorMode()
+        }
     }
 
     @Published var refreshInterval: RefreshInterval {
@@ -103,6 +106,8 @@ final class AppSettings: ObservableObject {
     var usageColorLow: Color { Color(hex: usageColorLowHex) ?? .red }
     var usageColorMid: Color { Color(hex: usageColorMidHex) ?? .orange }
     var usageColorHigh: Color { Color(hex: usageColorHighHex) ?? .white }
+    var colorsByUsage: Bool { menuBarColorMode == .colorByUsage }
+    var followsSystemColor: Bool { menuBarColorMode == .followSystem }
 
     @Published private(set) var claudeSetupStatus: ClaudeSetupStatus = .unknown
     @Published var claudeSetupMessage: String?
@@ -118,7 +123,7 @@ final class AppSettings: ObservableObject {
             rawValue: defaults.string(forKey: Keys.menuBarDisplayMode) ?? ""
         ) ?? .battery
         showMenuBarPercent = Self.bool(defaults, Keys.showMenuBarPercent, defaultValue: true)
-        colorByUsage = Self.bool(defaults, Keys.colorByUsage, defaultValue: true)
+        menuBarColorMode = Self.menuBarColorMode(defaults)
         refreshInterval = RefreshInterval(
             rawValue: defaults.integer(forKey: Keys.refreshInterval)
         ) ?? .oneMinute
@@ -135,6 +140,7 @@ final class AppSettings: ObservableObject {
         usageColorLowHex = defaults.string(forKey: Keys.usageColorLow) ?? UsageLevelColor.low.defaultHex
         usageColorMidHex = defaults.string(forKey: Keys.usageColorMid) ?? UsageLevelColor.mid.defaultHex
         usageColorHighHex = defaults.string(forKey: Keys.usageColorHigh) ?? UsageLevelColor.high.defaultHex
+        persistMenuBarColorMode()
         refreshClaudeSetupStatus()
     }
 
@@ -208,6 +214,24 @@ final class AppSettings: ObservableObject {
         }
 
         return min(max(defaults.integer(forKey: key), range.lowerBound), range.upperBound)
+    }
+
+    private static func menuBarColorMode(_ defaults: UserDefaults) -> MenuBarColorMode {
+        if let rawValue = defaults.string(forKey: Keys.menuBarColorMode),
+           let mode = MenuBarColorMode(rawValue: rawValue) {
+            return mode
+        }
+
+        guard defaults.object(forKey: Keys.colorByUsage) != nil else {
+            return .colorByUsage
+        }
+
+        return defaults.bool(forKey: Keys.colorByUsage) ? .colorByUsage : .followSystem
+    }
+
+    private func persistMenuBarColorMode() {
+        defaults.set(menuBarColorMode.rawValue, forKey: Keys.menuBarColorMode)
+        defaults.set(menuBarColorMode == .colorByUsage, forKey: Keys.colorByUsage)
     }
 
     private var claudeSetupConfiguration: ClaudeSetupConfiguration {

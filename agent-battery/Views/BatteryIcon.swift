@@ -11,10 +11,13 @@ struct BatteryIcon: View {
     var highColor: Color = .white
     var lowEdge: Double = 16
     var midEdge: Double = 41
+    var isTemplate: Bool = false
+    var rendersAsImage: Bool = true
 
     var body: some View {
-        if let image = renderedImage() {
+        if rendersAsImage, let image = renderedImage() {
             Image(nsImage: image)
+                .renderingMode(isTemplate ? .template : .original)
         } else {
             drawing
         }
@@ -70,11 +73,12 @@ struct BatteryIcon: View {
     }
 
     private var borderColor: Color {
-        Color.white.opacity(0.46)
+        isTemplate ? Color.black.opacity(0.46) : Color.white.opacity(0.46)
     }
 
     private var resolvedFillColor: Color {
-        autoColor ? autoColorForPercent : fillColor
+        if isTemplate { return .black }
+        return autoColor ? autoColorForPercent : fillColor
     }
 
     private var autoColorForPercent: Color {

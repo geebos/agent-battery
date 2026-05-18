@@ -16,14 +16,16 @@ struct MenuBarModePreview: View {
                 BatteryIcon(
                     percent: percent,
                     height: 12,
-                    autoColor: settings.colorByUsage,
+                    autoColor: settings.colorsByUsage,
                     fillColor: .white,
                     lowColor: settings.usageColorLow,
                     midColor: settings.usageColorMid,
                     highColor: settings.usageColorHigh,
                     lowEdge: Double(settings.criticalThreshold),
-                    midEdge: Double(settings.warningThreshold)
+                    midEdge: Double(settings.warningThreshold),
+                    isTemplate: settings.followsSystemColor
                 )
+                .foregroundStyle(.white)
                 Text(percentText)
                     .foregroundStyle(textColor)
             case .tool:
@@ -49,7 +51,7 @@ struct MenuBarModePreview: View {
         case .battery:
             return .white
         case .percent, .tool:
-            guard settings.colorByUsage else { return .white }
+            guard settings.colorsByUsage else { return .white }
             if percent < Double(settings.criticalThreshold) {
                 return settings.usageColorLow
             }
@@ -143,14 +145,16 @@ private struct MenuBarSideBySideModePreview: View {
                             BatteryIcon(
                                 percent: sample.percent,
                                 height: 9,
-                                autoColor: settings.colorByUsage,
+                                autoColor: settings.colorsByUsage,
                                 fillColor: .white,
                                 lowColor: settings.usageColorLow,
                                 midColor: settings.usageColorMid,
                                 highColor: settings.usageColorHigh,
                                 lowEdge: Double(settings.criticalThreshold),
-                                midEdge: Double(settings.warningThreshold)
+                                midEdge: Double(settings.warningThreshold),
+                                isTemplate: settings.followsSystemColor
                             )
+                            .foregroundStyle(.white)
                             Text(percentText(sample.percent))
                                 .foregroundStyle(.white)
                         }
@@ -186,7 +190,7 @@ private struct MenuBarSideBySideModePreview: View {
         case .battery:
             return .white
         case .percent, .tool:
-            guard settings.colorByUsage else { return .white }
+            guard settings.colorsByUsage else { return .white }
             if percent < Double(settings.criticalThreshold) {
                 return settings.usageColorLow
             }

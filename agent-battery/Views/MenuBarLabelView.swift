@@ -18,21 +18,24 @@ struct MenuBarLabelView: View {
         let percent = UsageFormatters.percentText(snapshot.menuBarRemainingPercent)
         let showsPercent = settings.showMenuBarPercent
         let color = labelColor(for: snapshot)
+        let isTemplate = settings.followsSystemColor
 
         switch settings.menuBarDisplayMode {
         case .percent:
-            MenuBarText(text: percent, color: color)
+            MenuBarText(text: percent, color: color, isTemplate: isTemplate)
         case .battery:
             if showsPercent {
-                Image(nsImage: batteryWithPercentImage(snapshot: snapshot, percent: percent, color: color))
+                Image(nsImage: batteryWithPercentImage(snapshot: snapshot, percent: percent, color: color, isTemplate: isTemplate))
+                    .renderingMode(isTemplate ? .template : .original)
             } else {
-                batteryIcon(snapshot: snapshot)
+                Image(nsImage: renderedBatteryImage(snapshot: snapshot, height: 12, isTemplate: isTemplate))
+                    .renderingMode(isTemplate ? .template : .original)
             }
         case .tool:
             if showsPercent {
-                MenuBarText(text: "\(snapshot.tool.shortName) \(percent)", color: color)
+                MenuBarText(text: "\(snapshot.tool.shortName) \(percent)", color: color, isTemplate: isTemplate)
             } else {
-                MenuBarText(text: snapshot.tool.shortName, color: color)
+                MenuBarText(text: snapshot.tool.shortName, color: color, isTemplate: isTemplate)
             }
         }
     }
@@ -40,18 +43,23 @@ struct MenuBarLabelView: View {
     @ViewBuilder
     private var sideBySideLabel: some View {
         let snapshots = sideBySideSnapshots
+        let isTemplate = settings.followsSystemColor
 
         switch settings.menuBarDisplayMode {
         case .percent:
-            Image(nsImage: sideBySidePercentImage(snapshots: snapshots))
+            Image(nsImage: sideBySidePercentImage(snapshots: snapshots, isTemplate: isTemplate))
+                .renderingMode(isTemplate ? .template : .original)
         case .battery:
             if settings.showMenuBarPercent {
-                Image(nsImage: sideBySideBatteryWithPercentImage(snapshots: snapshots))
+                Image(nsImage: sideBySideBatteryWithPercentImage(snapshots: snapshots, isTemplate: isTemplate))
+                    .renderingMode(isTemplate ? .template : .original)
             } else {
-                Image(nsImage: sideBySideBatteryImage(snapshots: snapshots))
+                Image(nsImage: sideBySideBatteryImage(snapshots: snapshots, isTemplate: isTemplate))
+                    .renderingMode(isTemplate ? .template : .original)
             }
         case .tool:
-            Image(nsImage: sideBySideToolImage(snapshots: snapshots))
+            Image(nsImage: sideBySideToolImage(snapshots: snapshots, isTemplate: isTemplate))
+                .renderingMode(isTemplate ? .template : .original)
         }
     }
 
@@ -61,30 +69,42 @@ struct MenuBarLabelView: View {
 
     private static let sideBySideTools: [UsageTool] = [.claudeCode, .codex]
 
-    private func batteryIcon(snapshot: UsageSnapshot, height: CGFloat = 12) -> some View {
+    private func batteryIcon(
+        snapshot: UsageSnapshot,
+        height: CGFloat = 12,
+        isTemplate: Bool = false,
+        rendersAsImage: Bool = true
+    ) -> some View {
         BatteryIcon(
             percent: snapshot.menuBarRemainingPercent,
             height: height,
-            autoColor: settings.colorByUsage,
+            autoColor: settings.colorsByUsage,
             fillColor: .white,
             lowColor: settings.usageColorLow,
             midColor: settings.usageColorMid,
             highColor: settings.usageColorHigh,
             lowEdge: Double(settings.criticalThreshold),
-            midEdge: Double(settings.warningThreshold)
+            midEdge: Double(settings.warningThreshold),
+            isTemplate: isTemplate,
+            rendersAsImage: rendersAsImage
         )
     }
 
     @MainActor
-    private func batteryWithPercentImage(snapshot: UsageSnapshot, percent: String, color: Color) -> NSImage {
+    private func batteryWithPercentImage(
+        snapshot: UsageSnapshot,
+        percent: String,
+        color: Color,
+        isTemplate: Bool = false
+    ) -> NSImage {
         let height: CGFloat = 12
         let spacing: CGFloat = 4
-        let batteryImage = renderedBatteryImage(snapshot: snapshot, height: height)
+        let batteryImage = renderedBatteryImage(snapshot: snapshot, height: height, isTemplate: isTemplate)
         let batterySize = batteryImage.size
 
         let attrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.menuBarFont(ofSize: 0),
-            .foregroundColor: NSColor(color)
+            .foregroundColor: isTemplate ? NSColor.black : NSColor(color)
         ]
         let attrString = NSAttributedString(string: percent, attributes: attrs)
         let textSize = attrString.size()
@@ -99,7 +119,7 @@ struct MenuBarLabelView: View {
             attrString.draw(at: NSPoint(x: batterySize.width + spacing, y: textY))
             return true
         }
-        image.isTemplate = false
+        image.isTemplate = isTemplate
         return image
     }
 }
@@ -126,15 +146,17 @@ private struct MenuBarToolImageRow {
 private struct MenuBarText: View {
     let text: String
     let color: Color
+    var isTemplate: Bool = false
 
     var body: some View {
         Image(nsImage: renderedImage())
+            .renderingMode(isTemplate ? .template : .original)
     }
 
     private func renderedImage() -> NSImage {
         let attrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.menuBarFont(ofSize: 0),
-            .foregroundColor: NSColor(color)
+            .foregroundColor: isTemplate ? NSColor.black : NSColor(color)
         ]
         let attrString = NSAttributedString(string: text, attributes: attrs)
         let size = attrString.size()
@@ -143,7 +165,7 @@ private struct MenuBarText: View {
             attrString.draw(in: rect)
             return true
         }
-        image.isTemplate = false
+        image.isTemplate = isTemplate
         return image
     }
 }
@@ -157,7 +179,7 @@ extension MenuBarLabelView {
         let usesUsageColor: Bool
         switch settings.menuBarDisplayMode {
         case .percent, .tool:
-            usesUsageColor = settings.colorByUsage
+            usesUsageColor = settings.colorsByUsage
         case .battery:
             usesUsageColor = false
         }
@@ -174,26 +196,36 @@ extension MenuBarLabelView {
     }
 
     @MainActor
-    fileprivate func sideBySidePercentImage(snapshots: [UsageSnapshot]) -> NSImage {
+    fileprivate func sideBySidePercentImage(snapshots: [UsageSnapshot], isTemplate: Bool = false) -> NSImage {
         textRowsImage(
             snapshots.map { snapshot in
                 MenuBarTextImageRow(
                     text: UsageFormatters.percentText(snapshot.menuBarRemainingPercent),
                     color: labelColor(for: snapshot)
                 )
-            }
+            },
+            isTemplate: isTemplate
         )
     }
 
     @MainActor
-    fileprivate func sideBySideBatteryImage(snapshots: [UsageSnapshot]) -> NSImage {
+    fileprivate func sideBySideBatteryImage(snapshots: [UsageSnapshot], isTemplate: Bool = false) -> NSImage {
         let batteryImages = snapshots.map {
-            renderedBatteryImage(snapshot: $0, height: MenuBarSideBySideMetrics.batteryHeight)
+            renderedBatteryImage(
+                snapshot: $0,
+                height: MenuBarSideBySideMetrics.batteryHeight,
+                isTemplate: isTemplate
+            )
         }
         let rowHeight = ceil(maxValue(batteryImages.map { $0.size.height }))
         let width = ceil(maxValue(batteryImages.map { $0.size.width }))
 
-        return renderedRowsImage(rowCount: batteryImages.count, width: width, rowHeight: rowHeight) { index, y, rowHeight in
+        return renderedRowsImage(
+            rowCount: batteryImages.count,
+            width: width,
+            rowHeight: rowHeight,
+            isTemplate: isTemplate
+        ) { index, y, rowHeight in
             let batterySize = batteryImages[index].size
             batteryImages[index].draw(
                 in: NSRect(
@@ -207,14 +239,22 @@ extension MenuBarLabelView {
     }
 
     @MainActor
-    fileprivate func sideBySideBatteryWithPercentImage(snapshots: [UsageSnapshot]) -> NSImage {
+    fileprivate func sideBySideBatteryWithPercentImage(
+        snapshots: [UsageSnapshot],
+        isTemplate: Bool = false
+    ) -> NSImage {
         let batteryImages = snapshots.map {
-            renderedBatteryImage(snapshot: $0, height: MenuBarSideBySideMetrics.batteryHeight)
+            renderedBatteryImage(
+                snapshot: $0,
+                height: MenuBarSideBySideMetrics.batteryHeight,
+                isTemplate: isTemplate
+            )
         }
         let textRows = snapshots.map { snapshot in
             attributedString(
                 UsageFormatters.percentText(snapshot.menuBarRemainingPercent),
-                color: labelColor(for: snapshot)
+                color: labelColor(for: snapshot),
+                isTemplate: isTemplate
             )
         }
         let textSizes = textRows.map { $0.size() }
@@ -225,7 +265,12 @@ extension MenuBarLabelView {
         let rowHeight = max(batteryHeight, textHeight)
         let width = batteryWidth + MenuBarSideBySideMetrics.batteryTextSpacing + textWidth
 
-        return renderedRowsImage(rowCount: snapshots.count, width: width, rowHeight: rowHeight) { index, y, rowHeight in
+        return renderedRowsImage(
+            rowCount: snapshots.count,
+            width: width,
+            rowHeight: rowHeight,
+            isTemplate: isTemplate
+        ) { index, y, rowHeight in
             let batterySize = batteryImages[index].size
             batteryImages[index].draw(
                 in: NSRect(
@@ -247,7 +292,7 @@ extension MenuBarLabelView {
     }
 
     @MainActor
-    fileprivate func sideBySideToolImage(snapshots: [UsageSnapshot]) -> NSImage {
+    fileprivate func sideBySideToolImage(snapshots: [UsageSnapshot], isTemplate: Bool = false) -> NSImage {
         let rows = snapshots.map { snapshot in
             MenuBarToolImageRow(
                 name: snapshot.tool.shortName,
@@ -257,11 +302,14 @@ extension MenuBarLabelView {
         }
 
         guard settings.showMenuBarPercent else {
-            return textRowsImage(rows.map { MenuBarTextImageRow(text: $0.name, color: $0.color) })
+            return textRowsImage(
+                rows.map { MenuBarTextImageRow(text: $0.name, color: $0.color) },
+                isTemplate: isTemplate
+            )
         }
 
-        let nameRows = rows.map { attributedString($0.name, color: $0.color) }
-        let percentRows = rows.map { attributedString($0.percent ?? "", color: $0.color) }
+        let nameRows = rows.map { attributedString($0.name, color: $0.color, isTemplate: isTemplate) }
+        let percentRows = rows.map { attributedString($0.percent ?? "", color: $0.color, isTemplate: isTemplate) }
         let nameSizes = nameRows.map { $0.size() }
         let percentSizes = percentRows.map { $0.size() }
         let nameWidth = ceil(maxValue(nameSizes.map { $0.width }))
@@ -269,7 +317,12 @@ extension MenuBarLabelView {
         let rowHeight = ceil(max(maxValue(nameSizes.map { $0.height }), maxValue(percentSizes.map { $0.height })))
         let width = nameWidth + MenuBarSideBySideMetrics.toolPercentSpacing + percentWidth
 
-        return renderedRowsImage(rowCount: rows.count, width: width, rowHeight: rowHeight) { index, y, rowHeight in
+        return renderedRowsImage(
+            rowCount: rows.count,
+            width: width,
+            rowHeight: rowHeight,
+            isTemplate: isTemplate
+        ) { index, y, rowHeight in
             let nameSize = nameSizes[index]
             nameRows[index].draw(
                 at: NSPoint(
@@ -289,21 +342,33 @@ extension MenuBarLabelView {
     }
 
     @MainActor
-    fileprivate func renderedBatteryImage(snapshot: UsageSnapshot, height: CGFloat) -> NSImage {
-        let renderer = ImageRenderer(content: batteryIcon(snapshot: snapshot, height: height))
+    fileprivate func renderedBatteryImage(snapshot: UsageSnapshot, height: CGFloat, isTemplate: Bool = false) -> NSImage {
+        let renderer = ImageRenderer(
+            content: batteryIcon(
+                snapshot: snapshot,
+                height: height,
+                isTemplate: isTemplate,
+                rendersAsImage: false
+            )
+        )
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
         let image = renderer.nsImage ?? NSImage(size: NSSize(width: height * 2.4, height: height))
         image.isTemplate = false
         return image
     }
 
-    fileprivate func textRowsImage(_ rows: [MenuBarTextImageRow]) -> NSImage {
-        let attributedRows = rows.map { attributedString($0.text, color: $0.color) }
+    fileprivate func textRowsImage(_ rows: [MenuBarTextImageRow], isTemplate: Bool = false) -> NSImage {
+        let attributedRows = rows.map { attributedString($0.text, color: $0.color, isTemplate: isTemplate) }
         let sizes = attributedRows.map { $0.size() }
         let rowHeight = ceil(maxValue(sizes.map { $0.height }))
         let width = ceil(maxValue(sizes.map { $0.width }))
 
-        return renderedRowsImage(rowCount: rows.count, width: width, rowHeight: rowHeight) { index, y, rowHeight in
+        return renderedRowsImage(
+            rowCount: rows.count,
+            width: width,
+            rowHeight: rowHeight,
+            isTemplate: isTemplate
+        ) { index, y, rowHeight in
             let size = sizes[index]
             attributedRows[index].draw(
                 at: NSPoint(
@@ -318,6 +383,7 @@ extension MenuBarLabelView {
         rowCount: Int,
         width: CGFloat,
         rowHeight: CGFloat,
+        isTemplate: Bool = false,
         drawRow: @escaping (Int, CGFloat, CGFloat) -> Void
     ) -> NSImage {
         let normalizedRowCount = max(rowCount, 1)
@@ -334,16 +400,16 @@ extension MenuBarLabelView {
             }
             return true
         }
-        image.isTemplate = false
+        image.isTemplate = isTemplate
         return image
     }
 
-    fileprivate func attributedString(_ text: String, color: Color) -> NSAttributedString {
+    fileprivate func attributedString(_ text: String, color: Color, isTemplate: Bool = false) -> NSAttributedString {
         NSAttributedString(
             string: text,
             attributes: [
                 .font: MenuBarSideBySideMetrics.font,
-                .foregroundColor: NSColor(color),
+                .foregroundColor: isTemplate ? NSColor.black : NSColor(color),
             ]
         )
     }
