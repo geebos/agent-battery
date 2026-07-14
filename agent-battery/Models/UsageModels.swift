@@ -127,7 +127,7 @@ extension UsageSnapshot {
 
     var menuBarRemainingPercent: Double? {
         if let weeklyRemainingPercent,
-           weeklyRemainingPercent < Self.weeklyMenuBarDisplayThreshold {
+           weeklyRemainingPercent < Self.weeklyMenuBarDisplayThreshold || fiveHourRemainingPercent == nil {
             return weeklyRemainingPercent
         }
 

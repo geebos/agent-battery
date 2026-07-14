@@ -267,6 +267,34 @@ struct AgentBatteryTests {
         #expect(snapshot.weeklyRemainingPercent == 61)
     }
 
+    @Test func codexProviderDisplaysWeeklyOnlyRateLimitInMenuBar() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("agent-battery-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let rolloutURL = directory.appendingPathComponent("rollout-weekly-only.jsonl")
+        try """
+        {"timestamp":"2026-07-14T16:04:35.653Z","type":"event_msg","payload":{"type":"token_count","info":{},"rate_limits":{"limit_id":"codex","limit_name":null,"primary":{"used_percent":2.0,"window_minutes":10080,"resets_at":1784497819},"secondary":null,"credits":null,"individual_limit":null,"plan_type":"plus","rate_limit_reached_type":null}}}
+
+        """.write(to: rolloutURL, atomically: true, encoding: .utf8)
+
+        let snapshot = CodexUsageProvider().fetch(
+            configuration: UsageDataConfiguration(
+                claudeUsagePath: "",
+                codexSessionsPath: directory.path,
+                staleInterval: .greatestFiniteMagnitude
+            )
+        )
+
+        #expect(snapshot.status == .available)
+        #expect(snapshot.fiveHourRemainingPercent == nil)
+        #expect(snapshot.weeklyRemainingPercent == 98)
+        #expect(snapshot.menuBarRemainingPercent == 98)
+    }
+
     @Test func codexProviderExpandsTailUntilTokenCountIsFound() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("agent-battery-tests-\(UUID().uuidString)")
